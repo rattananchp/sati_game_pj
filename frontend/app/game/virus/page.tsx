@@ -46,7 +46,7 @@ export default function VirusPage() {
     return `${m}:${s}`;
   };
 
-  // ✅ แก้ไข: SAVE SCORE ใช้ API /submit-score
+  // ✅ SAVE SCORE
   const saveScore = async (finalScore: number) => {
     const userStr = localStorage.getItem('user');
     if (!userStr) return;
@@ -58,7 +58,6 @@ export default function VirusPage() {
     try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
         
-        // ยิงไปที่ /submit-score
         await fetch(`${apiUrl}/submit-score`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -66,8 +65,8 @@ export default function VirusPage() {
                 userId: userIdToSend,
                 score: finalScore,
                 gameType: 'virus',
-                timeTaken: survivalTime, // ส่งเวลาที่รอดไปด้วย
-                logs: [] // Virus ไม่มี Logs ส่งอาเรย์ว่างไป
+                timeTaken: survivalTime,
+                logs: [] 
             })
         });
         console.log("✅ Virus Score Saved!");
@@ -99,6 +98,7 @@ export default function VirusPage() {
       }
   }, [survivalTime, hasEnteredPhase3, view]);
 
+  // Countdown Logic
   useEffect(() => {
       if (isPhase3Warning && phase3Countdown > 0) {
           const timer = setTimeout(() => {
@@ -140,7 +140,6 @@ export default function VirusPage() {
         100% { transform: translateY(100%); }
     }
 
-    /* Countdown Animation */
     @keyframes popIn {
         0% { transform: scale(0.5); opacity: 0; }
         50% { transform: scale(1.2); opacity: 1; }
@@ -157,6 +156,7 @@ export default function VirusPage() {
   // Timer
   useEffect(() => {
     if (view !== 'playing' || isPhase3Warning) return; 
+    
     timerRef.current = setInterval(() => setSurvivalTime(t => t + 1), 1000);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [view, isPhase3Warning]);
@@ -173,25 +173,29 @@ export default function VirusPage() {
     return () => clearTimeout(timer);
   }, [view]);
 
-  // SPAWN LOGIC (1.5, 2.0, 2.5)
+  // SPAWN LOGIC
   useEffect(() => {
-    if (view !== 'playing' || isPhase3Warning) return;
+    if (view !== 'playing' || isPhase3Warning) {
+        if (loopRef.current) clearTimeout(loopRef.current);
+        return;
+    }
 
-    // Phase 1 (เริ่ม): สบายๆ
     let spawnRate = 1000;       
-    let disappearRate = 2500;  // 2.5 วินาที
+    let disappearRate = 2500; 
 
     if (phase === 2) { 
         spawnRate = 750;       
-        disappearRate = 2000;  // 2.0 วินาที
+        disappearRate = 2000; 
     } 
     else if (phase === 3) { 
-        spawnRate = 500;       // โผล่ไว
-        disappearRate = 1500;  // 1.5 วินาที
+        spawnRate = 500;       
+        disappearRate = 1500;  
     }
 
     const spawn = () => {
       setGrid(prevGrid => {
+        if (isPhase3Warning) return prevGrid;
+
         const isBossActive = prevGrid.includes('boss');
         bossTimerRef.current += spawnRate;
 
@@ -205,7 +209,6 @@ export default function VirusPage() {
         let type: CellState = 'virus';
         let currentDisappearRate = disappearRate;
 
-        // Boss Condition
         if (!isBossActive && bossTimerRef.current > 20000 && r > 0.7) {
             type = 'boss';
             setBossHp(5);
@@ -224,10 +227,10 @@ export default function VirusPage() {
 
         newGrid[randIdx] = type;
 
-        // Cleanup Logic
         setTimeout(() => {
              setGrid(currentGrid => {
-                 // ตรวจสอบอีกทีว่าช่องนั้นยังเป็น type เดิมอยู่ไหม (ถ้าโดนล้างกระดานไปแล้วจะเป็น empty)
+                 if (isPhase3Warning) return currentGrid;
+
                  if (currentGrid[randIdx] === type) { 
                      const nextGrid = [...currentGrid];
                      nextGrid[randIdx] = 'empty';
@@ -275,7 +278,10 @@ export default function VirusPage() {
             playSound('smash');
             newGrid[index] = 'empty';
             setScore(s => s + 200);
-            setHp(h => Math.min(200, h + 30));
+            
+            // ❌ เอาโค้ดเพิ่มเลือดออกแล้ว (setHp) ❌
+            // setHp(h => Math.min(200, h + 30)); 
+            
             setBossHp(0);
         }
     } else if (type === 'virus') {
