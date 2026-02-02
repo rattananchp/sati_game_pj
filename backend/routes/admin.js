@@ -1,69 +1,103 @@
-// routes/admin.js
 import express from 'express';
-
 const router = express.Router();
 
-export default (prisma) => {
-    
-    // API: /admin/stats
+export default function (prisma) {
+
+    // 1. GET: /stats (แก้ให้ดึงเฉพาะ Hard สำหรับตาราง Hardest Questions)
     router.get('/stats', async (req, res) => {
         try {
-            // 1. Overview
-            const totalUsers = await prisma.user.count();
-            const totalGames = await prisma.game.count();
-            const totalVirusGames = await prisma.gameScore.count({
-                where: { game_type: 'virus' }
+            // --- A. Overview (เหมือนเดิม) ---
+            const totalUsers = await prisma.user.count({ where: { role: 'user' } });
+            const totalGames = await prisma.gameScore.count({ where: { game_type: 'quiz' } }); // นับรวมทุกระดับ
+            const totalVirusGames = await prisma.gameScore.count({ where: { game_type: 'virus' } });
+
+            // --- B. Hardest Questions (✅ แก้: กรองเฉพาะ Level Hard) ---
+            const hardQuestions = await prisma.questions.findMany({
+                where: { level: 'hard' }, // ⭐ กรองเฉพาะ Hard
+                include: {
+                    answerLogs: true // ดึงประวัติการตอบมาด้วย
+                }
             });
 
-            // 2. Hardest Questions
-            const questionStats = await prisma.answerLogs.groupBy({
-                by: ['qid', 'is_correct'],
-                _count: { _all: true },
-            });
-
-            const questions = await prisma.questions.findMany({
-                select: { qid: true, question: true, level: true }
-            });
-
-            const analyzedQuestions = questions.map(q => {
-                const correctLog = questionStats.find(s => s.qid === q.qid && s.is_correct === true);
-                const wrongLog = questionStats.find(s => s.qid === q.qid && s.is_correct === false);
-                
-                const correctCount = correctLog?._count._all || 0;
-                const wrongCount = wrongLog?._count._all || 0;
-                const totalAttempts = correctCount + wrongCount;
+            // คำนวณความยาก
+            const questionStats = hardQuestions.map(q => {
+                const total = q.answerLogs.length;
+                const correct = q.answerLogs.filter(log => log.is_correct).length;
+                const rate = total === 0 ? 0 : (correct / total) * 100;
                 
                 return {
-                    ...q,
-                    correctRate: totalAttempts > 0 ? (correctCount / totalAttempts) * 100 : 0,
-                    totalAttempts
+                    qid: q.qid,
+                    question: q.question,
+                    level: q.level,
+                    correctRate: rate,
+                    totalAttempts: total
                 };
             })
+            // เรียงจาก "ตอบถูกน้อยสุด" (ยากสุด) ไปมาก
             .sort((a, b) => a.correctRate - b.correctRate)
-            .slice(0, 10);
+            .slice(0, 10); // เอาแค่ 10 อันดับแรก
 
-            // 3. Recent Logs
+            // --- C. Recent Logs (เหมือนเดิม) ---
             const recentLogs = await prisma.answerLogs.findMany({
                 take: 20,
                 orderBy: { answered_at: 'desc' },
-                include: {
-                    user: { select: { username: true } },
-                    question: { select: { question: true } },
-                    choice: { select: { choice_text: true } }
-                }
+                include: { user: true, question: true, choice: true }
             });
 
             res.json({
                 overview: { totalUsers, totalGames, totalVirusGames },
-                hardestQuestions: analyzedQuestions,
+                hardestQuestions: questionStats,
                 recentLogs
             });
 
-        } catch (error) {
-            console.error("Admin stats error:", error);
-            res.status(500).json({ error: 'Failed to fetch admin stats' });
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ error: "Server Error" });
+        }
+    });
+
+    // ✅ 2. เพิ่ม API ใหม่: ดึงรายละเอียดเจาะลึกรายข้อ (/question-detail/:qid)
+    router.get('/question-detail/:qid', async (req, res) => {
+        const { qid } = req.params;
+        try {
+            const questionId = parseInt(qid);
+
+            // 1. ดึงช้อยส์ทั้งหมดของข้อนี้
+            const choices = await prisma.choices.findMany({
+                where: { qid: questionId }
+            });
+
+            // 2. ดึงประวัติการตอบทั้งหมดของข้อนี้
+            const logs = await prisma.answerLogs.findMany({
+                where: { qid: questionId }
+            });
+
+            // 3. คำนวณว่าแต่ละช้อยส์มีคนเลือกกี่คน
+            const totalAnswers = logs.length;
+            
+            const breakdown = choices.map(choice => {
+                const count = logs.filter(log => log.cid === choice.cid).length;
+                const percent = totalAnswers === 0 ? 0 : (count / totalAnswers) * 100;
+                
+                return {
+                    choice_text: choice.choice_text,
+                    is_correct: choice.is_correct,
+                    count: count,
+                    percent: parseFloat(percent.toFixed(1))
+                };
+            });
+
+            res.json({
+                questionId,
+                totalAnswers,
+                breakdown // ส่งข้อมูลแจกแจงกลับไป
+            });
+
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ error: "Detail Error" });
         }
     });
 
     return router;
-};
+}

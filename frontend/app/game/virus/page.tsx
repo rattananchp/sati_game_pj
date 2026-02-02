@@ -46,7 +46,7 @@ export default function VirusPage() {
     return `${m}:${s}`;
   };
 
-  // --- SAVE SCORE ---
+  // ✅ แก้ไข: SAVE SCORE ใช้ API /submit-score
   const saveScore = async (finalScore: number) => {
     const userStr = localStorage.getItem('user');
     if (!userStr) return;
@@ -57,15 +57,20 @@ export default function VirusPage() {
 
     try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-        await fetch(`${apiUrl}/scores/save`, {
+        
+        // ยิงไปที่ /submit-score
+        await fetch(`${apiUrl}/submit-score`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 userId: userIdToSend,
                 score: finalScore,
-                gameType: 'virus'
+                gameType: 'virus',
+                timeTaken: survivalTime, // ส่งเวลาที่รอดไปด้วย
+                logs: [] // Virus ไม่มี Logs ส่งอาเรย์ว่างไป
             })
         });
+        console.log("✅ Virus Score Saved!");
     } catch (e) {
         console.error(e);
     }
@@ -83,14 +88,13 @@ export default function VirusPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hp, view, score]);
 
-  // --- PHASE 3 WARNING LOGIC (แก้ไขตรงนี้) ---
+  // --- PHASE 3 WARNING LOGIC ---
   useEffect(() => {
       if (view === 'playing' && survivalTime === 35 && !hasEnteredPhase3) {
           setHasEnteredPhase3(true);
           setIsPhase3Warning(true);
           setPhase3Countdown(3);
-          // ✅ เพิ่มบรรทัดนี้: ล้างกระดานทันที เพื่อไม่ให้ของเก่าระเบิดใส่
-          setGrid(Array(GRID_SIZE).fill('empty')); 
+          setGrid(Array(GRID_SIZE).fill('empty')); // ล้างกระดาน
           playSound('wrong'); 
       }
   }, [survivalTime, hasEnteredPhase3, view]);
@@ -169,7 +173,7 @@ export default function VirusPage() {
     return () => clearTimeout(timer);
   }, [view]);
 
-  // ✅ SPAWN LOGIC (1.5, 2.0, 2.5)
+  // SPAWN LOGIC (1.5, 2.0, 2.5)
   useEffect(() => {
     if (view !== 'playing' || isPhase3Warning) return;
 
@@ -446,7 +450,7 @@ export default function VirusPage() {
                 </div>
             </div>
 
-            {/* ✅ UPDATED: Phase 3 Warning (Grey Glass Theme with Thai) */}
+            {/* Phase 3 Warning */}
             {isPhase3Warning && (
                 <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gray-900/80 backdrop-blur-xl animate-fade-in">
                     

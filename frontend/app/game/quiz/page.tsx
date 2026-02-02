@@ -5,6 +5,13 @@ import { playSound } from '@/app/lib/sound';
 import Link from 'next/link';
 
 // --- Interface ---
+
+interface AnswerLog {
+  qid: number;
+  cid: number;
+  is_correct: boolean;
+}
+
 interface Choice {
   cid: number;
   choice_text: string;
@@ -52,7 +59,7 @@ function QuizContent() {
   const searchParams = useSearchParams();
   const diff = searchParams.get('diff') || 'easy';
   const config = GAME_CONFIG[diff.toLowerCase()] || GAME_CONFIG['easy'];
-  
+  const [answerLogs, setAnswerLogs] = useState<AnswerLog[]>([]);
 const [isMuted, setIsMuted] = useState(() => {
   if (typeof window !== 'undefined') {
     const saved = localStorage.getItem('isMuted');
@@ -173,31 +180,33 @@ const toggleMute = () => {
       setGameState('finished');
       playSound('correct');
 
-      // บันทึกคะแนน (เฉพาะโหมดยาก หรือตามเงื่อนไขที่ต้องการ)
-      if (currentUser && diff === 'hard') {
+      // ✅ 4. ใช้โค้ดชุดนี้แทนอันเดิม (เพื่อส่ง logs ไปด้วย)
+      if (currentUser) {
           try {
               const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
               const userIdToSend = currentUser.uid || currentUser.id;
               
               if (!userIdToSend) return;
 
-              await fetch(`${apiUrl}/scores/save`, {
+              // ยิงไปที่ /submit-score (ตัวใหม่ที่เราเพิ่งทำ)
+              await fetch(`${apiUrl}/submit-score`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
                       userId: userIdToSend,
                       score: score,
                       gameType: 'quiz',
-                      difficulty: 'hard'
+                      difficulty: diff, 
+                      timeTaken: config.time - timeLeft, // หรือคำนวณเวลารวมเอาตามสะดวก
+                      logs: answerLogs // ⭐ สำคัญมาก! ส่งประวัติการตอบไปด้วย
                   })
               });
-              console.log("✅ Quiz Score Saved!");
+              console.log("✅ Full Game Data Saved!");
           } catch (e) {
               console.error("❌ Save score error", e);
           }
       }
   };
-
   const nextQuestion = () => {
     setShowFeedback(false);
     setSelectedChoiceId(null);
@@ -220,7 +229,11 @@ const toggleMute = () => {
     const correct = choice.is_correct === true; 
     setIsCorrect(correct);
     setIsTimeOut(false);
-
+    setAnswerLogs(prev => [...prev, {
+        qid: questions[currentQIndex].qid,
+        cid: choice.cid,
+        is_correct: correct
+    }]);
     if (correct) {
         setCorrectCount(prev => prev + 1);
         const points = config.score; 

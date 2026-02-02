@@ -8,6 +8,7 @@ import questionRoute from './routes/questions.js';
 import scoreRoute from './routes/score.js';
 import userRoute from './routes/user.js'; // ✅ 1. แก้ชื่อตรงนี้เป็น userRoute (อย่าใช้ scoreRoute ซ้ำ)
 import adminRoute from './routes/admin.js';
+import submitRoute from './routes/submit.js';
 const app = express();
 const prisma = new PrismaClient();
 const port = 4000;
@@ -29,6 +30,7 @@ app.use('/questions', questionRoute(prisma));
 app.use('/scores', scoreRoute(prisma));
 app.use('/user', userRoute(prisma)); // ✅ 2. ตรงนี้ต้องเรียก userRoute (ตามที่ import มา)
 app.use('/admin', adminRoute(prisma));
+app.use('/submit-score', submitRoute(prisma));
 // Start Server
 if (process.env.NODE_ENV !== 'production') {
   app.listen(port, () => {

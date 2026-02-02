@@ -34,9 +34,8 @@ export default function (prisma) {
     // 2. Leaderboard
     // ==========================================
     router.get('/leaderboard', async (req, res) => {
-        const { type } = req.query; 
-        console.log(`🔍 Fetching Leaderboard for type: ${type}`);
-
+        const { type } = req.query; // 'quiz_hard' หรือ 'virus'
+        
         try {
             let whereCondition = {};
             
@@ -44,13 +43,17 @@ export default function (prisma) {
                 whereCondition = { game_type: 'quiz', difficulty: 'hard' };
             } else if (type === 'virus') {
                 whereCondition = { game_type: 'virus' };
+            } else {
+                return res.json([]);
             }
 
+            // ดึงข้อมูลดิบมาคำนวณ
             const allScores = await prisma.gameScore.findMany({
                 where: whereCondition,
                 include: { user: true }, 
             });
 
+            // คำนวณจัดอันดับ
             const leaderboardMap = new Map();
 
             for (const record of allScores) {
@@ -68,23 +71,22 @@ export default function (prisma) {
                 const entry = leaderboardMap.get(uid);
 
                 if (type === 'quiz_hard') {
-                    entry.score += currentScore;
+                    entry.score += currentScore; // Quiz Hard = คะแนนสะสม
                 } else {
-                    if (currentScore > entry.score) {
-                        entry.score = currentScore;
-                    }
+                    if (currentScore > entry.score) entry.score = currentScore; // Virus = High Score
                 }
             }
 
-            const calculatedLeaderboard = Array.from(leaderboardMap.values())
+            // เรียงจากมากไปน้อย -> ตัดมา 20 คนแรก
+            const result = Array.from(leaderboardMap.values())
                 .sort((a, b) => b.score - a.score) 
                 .slice(0, 20);
 
-            res.json(calculatedLeaderboard);
+            res.json(result);
 
         } catch (err) {
             console.error(err);
-            res.status(500).json({ error: "Fetch leaderboard failed" });
+            res.status(500).json({ error: "โหลด Leaderboard ไม่สำเร็จ" });
         }
     });
 
