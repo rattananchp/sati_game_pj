@@ -31,6 +31,9 @@ interface DashboardData {
 export default function AdminDashboard() {
   const router = useRouter();
   
+  // ✅ 1. ประกาศตัวแปร API URL ตรงนี้ (ถ้ามี Env ให้ใช้ Env ถ้าไม่มีให้ใช้ Localhost)
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+
   // State
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [data, setData] = useState<DashboardData | null>(null);
@@ -71,7 +74,8 @@ export default function AdminDashboard() {
     if (!isAuthorized) return;
     const fetchData = async () => {
       try {
-        const res = await fetch('http://localhost:4000/admin/stats');
+        // ✅ ใช้ API_URL
+        const res = await fetch(`${API_URL}/admin/stats`);
         const json = await res.json();
         setData(json);
       } catch (err) {
@@ -81,7 +85,7 @@ export default function AdminDashboard() {
       }
     };
     fetchData();
-  }, [isAuthorized]);
+  }, [isAuthorized, API_URL]);
 
   // 3. Fetch Questions (Hard Only, Limit 16)
   useEffect(() => {
@@ -90,8 +94,8 @@ export default function AdminDashboard() {
     const fetchQuestions = async () => {
         setIsLoadingQuestions(true);
         try {
-            // ✅ เปลี่ยน limit เป็น 16 ข้อ
-            const res = await fetch(`http://localhost:4000/admin/questions?page=${currentPage}&limit=16&sort=${sortOrder}`);
+            // ✅ ใช้ API_URL
+            const res = await fetch(`${API_URL}/admin/questions?page=${currentPage}&limit=16&sort=${sortOrder}`);
             const json = await res.json();
             setQuestions(json.questions);
             setTotalPages(json.totalPages);
@@ -103,7 +107,7 @@ export default function AdminDashboard() {
     };
 
     fetchQuestions();
-  }, [isAuthorized, activeTab, currentPage, sortOrder]);
+  }, [isAuthorized, activeTab, currentPage, sortOrder, API_URL]);
 
   // Actions
   const handleQuestionClick = async (question: QuestionStats) => {
@@ -111,7 +115,8 @@ export default function AdminDashboard() {
       setIsLoadingDetail(true);
       setQuestionDetails([]);
       try {
-          const res = await fetch(`http://localhost:4000/admin/question-detail/${question.qid}`);
+          // ✅ ใช้ API_URL
+          const res = await fetch(`${API_URL}/admin/question-detail/${question.qid}`);
           const json = await res.json();
           if (json.breakdown) setQuestionDetails(json.breakdown);
       } catch (err) {
@@ -212,7 +217,6 @@ export default function AdminDashboard() {
                 {/* Header Control */}
                 <div className="flex flex-col md:flex-row justify-between items-center mb-3 gap-3 bg-gray-800/50 p-3 rounded-lg border border-gray-700/50">
                     <h2 className="text-sm md:text-base font-bold text-yellow-400 flex items-center gap-2">
-                        {/* ✅ คำนวณช่วงข้อสำหรับ 16 ข้อต่อหน้า */}
                         ⚠️ สถิติรายข้อ (Hard) - หน้า {currentPage} <span className="text-gray-500 text-xs font-normal">({questions.length > 0 ? (currentPage - 1) * 16 + 1 : 0}-{Math.min(currentPage * 16, (currentPage - 1) * 16 + questions.length)})</span>
                     </h2>
                     
@@ -233,7 +237,6 @@ export default function AdminDashboard() {
                 ) : questions.length === 0 ? (
                     <div className="p-8 text-center text-xs text-gray-500 bg-gray-800 rounded-xl border border-gray-700">ไม่พบข้อมูล</div>
                 ) : (
-                    // ✅ GRID LAYOUT: แบ่ง 2 คอลัมน์ (ซ้าย 8 ข้อ / ขวา 8 ข้อ)
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                         {renderTable(questions.slice(0, 8), (currentPage - 1) * 16)}
                         {renderTable(questions.slice(8, 16), (currentPage - 1) * 16 + 8)}
