@@ -183,6 +183,7 @@ const toggleMute = () => {
       // ✅ 4. ใช้โค้ดชุดนี้แทนอันเดิม (เพื่อส่ง logs ไปด้วย)
       if (currentUser) {
           try {
+            // const apiUrl = 'http://localhost:4000';
               const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
               const userIdToSend = currentUser.uid || currentUser.id;
               

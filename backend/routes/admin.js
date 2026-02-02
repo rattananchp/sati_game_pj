@@ -56,46 +56,60 @@ export default function (prisma) {
         }
     });
 
-    // ✅ 2. เพิ่ม API ใหม่: ดึงรายละเอียดเจาะลึกรายข้อ (/question-detail/:qid)
-    router.get('/question-detail/:qid', async (req, res) => {
-        const { qid } = req.params;
+    // ✅ แก้ไข API นี้: กรองเฉพาะ Hard + แบ่งหน้า + เรียงลำดับ
+    router.get('/questions', async (req, res) => {
         try {
-            const questionId = parseInt(qid);
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            const sortOrder = req.query.sort || 'asc'; 
 
-            // 1. ดึงช้อยส์ทั้งหมดของข้อนี้
-            const choices = await prisma.choices.findMany({
-                where: { qid: questionId }
+            // 1. ดึงเฉพาะข้อสอบระดับ Hard
+            const allQuestions = await prisma.questions.findMany({
+                where: { level: 'hard' }, // ⭐ เพิ่มบรรทัดนี้ครับ
+                include: {
+                    answerLogs: true
+                }
             });
 
-            // 2. ดึงประวัติการตอบทั้งหมดของข้อนี้
-            const logs = await prisma.answerLogs.findMany({
-                where: { qid: questionId }
-            });
+            // 2. คำนวณ % (เหมือนเดิม)
+            const calculatedQuestions = allQuestions.map(q => {
+                const total = q.answerLogs.length;
+                const correct = q.answerLogs.filter(log => log.is_correct).length;
+                const rate = total === 0 ? 0 : (correct / total) * 100;
 
-            // 3. คำนวณว่าแต่ละช้อยส์มีคนเลือกกี่คน
-            const totalAnswers = logs.length;
-            
-            const breakdown = choices.map(choice => {
-                const count = logs.filter(log => log.cid === choice.cid).length;
-                const percent = totalAnswers === 0 ? 0 : (count / totalAnswers) * 100;
-                
                 return {
-                    choice_text: choice.choice_text,
-                    is_correct: choice.is_correct,
-                    count: count,
-                    percent: parseFloat(percent.toFixed(1))
+                    qid: q.qid,
+                    question: q.question,
+                    level: q.level,
+                    correctRate: rate,
+                    totalAttempts: total
                 };
             });
 
+            // 3. เรียงลำดับ (เหมือนเดิม)
+            calculatedQuestions.sort((a, b) => {
+                if (sortOrder === 'asc') {
+                    return a.correctRate - b.correctRate;
+                } else {
+                    return b.correctRate - a.correctRate;
+                }
+            });
+
+            // 4. ตัดแบ่งหน้า (เหมือนเดิม)
+            const startIndex = (page - 1) * limit;
+            const endIndex = page * limit;
+            const paginatedQuestions = calculatedQuestions.slice(startIndex, endIndex);
+
             res.json({
-                questionId,
-                totalAnswers,
-                breakdown // ส่งข้อมูลแจกแจงกลับไป
+                questions: paginatedQuestions,
+                currentPage: page,
+                totalPages: Math.ceil(calculatedQuestions.length / limit),
+                totalQuestions: calculatedQuestions.length
             });
 
         } catch (err) {
             console.error(err);
-            res.status(500).json({ error: "Detail Error" });
+            res.status(500).json({ error: "Fetch questions failed" });
         }
     });
 
