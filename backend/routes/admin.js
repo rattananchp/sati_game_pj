@@ -22,16 +22,22 @@ export default function (prisma) {
             res.status(500).json({ error: "Stats error" });
         }
     });
-
-    // 2. API: ดึงรายการข้อสอบ (ตารางหลัก)
+    // 2. API: ดึงรายการข้อสอบ (ปรับปรุง: รองรับ Filter Level)
     router.get('/questions', async (req, res) => {
         try {
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 16;
-            const sortOrder = req.query.sort || 'asc'; 
+            const sortOrder = req.query.sort || 'asc';
+            const levelFilter = req.query.level || 'all'; // รับค่า level จากหน้าเว็บ
+
+            // สร้างเงื่อนไข Where
+            let whereCondition = {};
+            if (levelFilter !== 'all') {
+                whereCondition.level = levelFilter; // ถ้าไม่ใช่ all ให้กรองตาม level
+            }
 
             const allQuestions = await prisma.questions.findMany({
-                where: { level: 'hard' }, 
+                where: whereCondition, // ✅ ใช้เงื่อนไขที่สร้างขึ้น
                 include: {
                     answerLogs: {
                         select: { is_correct: true }
@@ -39,6 +45,7 @@ export default function (prisma) {
                 }
             });
 
+            // ... (Logic คำนวณ % เหมือนเดิม) ...
             const calculatedQuestions = allQuestions.map(q => {
                 const totalAttempts = q.answerLogs.length;
                 const correctCount = q.answerLogs.filter(log => log.is_correct).length;
@@ -53,11 +60,13 @@ export default function (prisma) {
                 };
             });
 
+            // Sorting
             calculatedQuestions.sort((a, b) => {
                 if (sortOrder === 'asc') return a.correctRate - b.correctRate;
                 return b.correctRate - a.correctRate;
             });
 
+            // Pagination
             const startIndex = (page - 1) * limit;
             const paginatedQuestions = calculatedQuestions.slice(startIndex, startIndex + limit);
 
@@ -117,6 +126,157 @@ export default function (prisma) {
         } catch (err) {
             console.error(err);
             res.status(500).json({ error: "Fetch detail failed" });
+        }
+    });
+
+// ... (ต่อจาก code เดิม)
+
+    // 4. API: เพิ่มโจทย์ใหม่ (Add Question)
+    router.post('/question/add', async (req, res) => {
+        try {
+            const { question, choices, correctIndex, level, explanation } = req.body;
+
+            if (!question || !choices || choices.length < 2 || correctIndex === undefined) {
+                return res.status(400).json({ error: "ข้อมูลไม่ครบถ้วน" });
+            }
+
+            // ✅ เช็คก่อนว่ามีคำถามนี้ในระบบหรือยัง?
+            const existingQuestion = await prisma.questions.findFirst({
+                where: { question: question } // ค้นหาจากชื่อคำถาม
+            });
+
+            if (existingQuestion) {
+                return res.status(400).json({ error: "คำถามนี้มีอยู่ในระบบแล้ว! กรุณาเปลี่ยนคำถาม" });
+            }
+
+            // ถ้าไม่ซ้ำ ก็บันทึกตามปกติ
+            const newQuestion = await prisma.questions.create({
+                data: {
+                    question: question,
+                    level: level || 'hard',
+                    explanation: explanation || '',
+                    choices: {
+                        create: choices.map((text, index) => ({
+                            choice_text: text,
+                            is_correct: index === parseInt(correctIndex)
+                        }))
+                    }
+                }
+            });
+
+            console.log(`✅ Added Question ID: ${newQuestion.qid}`);
+            res.json({ success: true, question: newQuestion });
+
+        } catch (err) {
+            console.error("Add Question Error:", err);
+            res.status(500).json({ error: "เพิ่มข้อมูลล้มเหลว", details: err.message });
+        }
+    });
+    // 5. API: ลบโจทย์ (Delete)
+    router.delete('/question/delete/:id', async (req, res) => {
+        try {
+            const qid = parseInt(req.params.id);
+
+            // ลบคำถาม (Prisma จะ Cascade ลบ Choices และ AnswerLogs ให้เองถ้าตั้งไว้)
+            // แต่เพื่อความชัวร์ เราลบตามลำดับก็ได้ หรือสั่งลบแม่ตัวเดียว
+            await prisma.questions.delete({
+                where: { qid: qid }
+            });
+
+            console.log(`🗑️ Deleted Question ID: ${qid}`);
+            res.json({ success: true });
+        } catch (err) {
+            console.error("Delete Error:", err);
+            res.status(500).json({ error: "ลบข้อมูลไม่สำเร็จ" });
+        }
+    });
+
+    // 6. API: แก้ไขโจทย์ (Update)
+    router.put('/question/update/:id', async (req, res) => {
+        try {
+            const qid = parseInt(req.params.id);
+            const { question, choices, correctIndex, level, explanation } = req.body;
+
+            // 1. อัปเดตตัวคำถามหลัก
+            await prisma.questions.update({
+                where: { qid: qid },
+                data: {
+                    question: question,
+                    level: level,
+                    explanation: explanation
+                }
+            });
+
+            // 2. อัปเดตช้อยส์ (ต้องดึงของเก่ามาเทียบ ID เพื่อ Update ทับ)
+            // ดึงช้อยส์เก่าเรียงตาม ID (เพื่อให้ลำดับตรงกับ Array ที่ส่งมา)
+            const oldChoices = await prisma.choices.findMany({
+                where: { qid: qid },
+                orderBy: { cid: 'asc' }
+            });
+
+            // วนลูปอัปเดตทีละข้อ (Update Existing Choices)
+            // เราสมมติว่ามี 4 ข้อเท่าเดิมเสมอ
+            for (let i = 0; i < oldChoices.length; i++) {
+                if (choices[i]) {
+                    await prisma.choices.update({
+                        where: { cid: oldChoices[i].cid },
+                        data: {
+                            choice_text: choices[i],
+                            is_correct: i === parseInt(correctIndex)
+                        }
+                    });
+                }
+            }
+
+            console.log(`✏️ Updated Question ID: ${qid}`);
+            res.json({ success: true });
+
+        } catch (err) {
+            console.error("Update Error:", err);
+            res.status(500).json({ error: "แก้ไขข้อมูลไม่สำเร็จ" });
+        }
+    });
+    // ✅ 7. API: ดึงข้อมูล Virus Leaderboard (ไม่นับซ้ำ: เอาคะแนนสูงสุดของแต่ละคน)
+    router.get('/virus/leaderboard', async (req, res) => {
+        try {
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+
+            // 1. ดึงข้อมูลแบบ Distinct (ไม่ซ้ำ User)
+            const scores = await prisma.gameScore.findMany({
+                where: { game_type: 'virus' },
+                distinct: ['uid'], // ✨ สำคัญ! คำสั่งนี้จะทำให้ User ID ไม่ซ้ำกัน (Prisma จะเลือกแถวแรกที่เจอตาม Order)
+                include: {
+                    user: {
+                        select: { username: true, email: true }
+                    }
+                },
+                orderBy: [
+                    { score: 'desc' },      // เรียงคะแนนมากสุดก่อน (ดังนั้น distinct จะหยิบอันที่คะแนนเยอะสุดมา)
+                    { played_at: 'desc' }   // ถ้าคะแนนเท่ากัน เอาคนเล่นล่าสุด
+                ],
+                skip: (page - 1) * limit,
+                take: limit
+            });
+
+            // 2. นับจำนวนผู้เล่นที่ไม่ซ้ำ (เพื่อทำ Pagination)
+            // ใช้ groupBy เพื่อหาจำนวน uid ที่ไม่ซ้ำกันจริงๆ
+            const uniquePlayers = await prisma.gameScore.groupBy({
+                by: ['uid'],
+                where: { game_type: 'virus' }
+            });
+            const total = uniquePlayers.length;
+
+            res.json({
+                scores,
+                total,
+                totalPages: Math.ceil(total / limit),
+                currentPage: page
+            });
+
+        } catch (err) {
+            console.error("Fetch Virus Leaderboard Error:", err);
+            res.status(500).json({ error: "ดึงข้อมูลไม่สำเร็จ" });
         }
     });
 

@@ -46,10 +46,10 @@ model GameScore {
   game_type  String   // ประเภทเกม เช่น 'quiz', 'virus'
   difficulty String?  // ระดับความยาก เช่น 'hard' (ถ้าเป็น virus อาจจะเป็น null)
   played_at  DateTime @default(now())
-
+  time_taken Int @default(0)
   uid        Int
   user       User     @relation(fields: [uid], references: [uid], onDelete: Cascade)
-
+  
   @@map("game_score")
 }
 

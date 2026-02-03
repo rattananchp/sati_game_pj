@@ -7,33 +7,31 @@ export default function (prisma) {
     router.post('/', async (req, res) => {
         const { userId, score, gameType, difficulty, logs, timeTaken } = req.body;
 
-        // 1. Validation เบื้องต้น
         if (!userId || isNaN(parseInt(userId))) {
             return res.status(400).json({ error: "Invalid User ID" });
         }
 
         const uid = parseInt(userId);
         const finalScore = parseInt(score);
+        const duration = parseInt(timeTaken) || 0; // ✅ รับค่าเวลาที่เล่นมา
 
-        // แปลง Difficulty เป็นตัวพิมพ์เล็กเสมอ เพื่อกันพลาด
+        // แปลง Difficulty เป็นตัวพิมพ์เล็กเสมอ
         const diffValue = difficulty ? difficulty.toLowerCase() : null;
 
-        console.log(`📥 Receiving Score: User ${uid} | ${gameType} (${diffValue}) | +${finalScore} pts`);
+        console.log(`📥 Receiving: User ${uid} | ${gameType} | ${finalScore} pts | ${duration}s`);
 
         try {
-            // ==================================================
-            // A. บันทึกประวัติการเล่นละเอียด (History) - เก็บทุกรอบไว้ดู Graph Admin
-            // ==================================================
+            // A. บันทึก History (เหมือนเดิม)
             if (gameType === 'quiz' && logs && logs.length > 0) {
-                 const newGame = await prisma.game.create({
+                 await prisma.game.create({
                     data: {
                         uid: uid,
                         total_score: finalScore,
-                        time_taken: timeTaken || 0,
+                        time_taken: duration,
                         finished_at: new Date(),
                         answerLogs: {
                             create: logs
-                                .filter(l => l.cid !== -1) // กรองข้อหมดเวลา
+                                .filter(l => l.cid !== -1)
                                 .map(log => ({
                                     uid: uid,
                                     qid: log.qid,
@@ -43,73 +41,73 @@ export default function (prisma) {
                         }
                     }
                 });
-                console.log(`✅ [History] Game ID ${newGame.gid} saved.`);
             }
 
-            // ==================================================
-            // B. บันทึกคะแนนลง Leaderboard (GameScore) - ⚠️ แก้ไขตรงนี้!
-            // ==================================================
-            
-            // 1. ค้นหาคะแนนเก่าก่อน
+            // B. บันทึก Leaderboard (แก้ไขใหม่ให้เก็บเวลาด้วย)
             const existingScore = await prisma.gameScore.findFirst({
                 where: {
                     uid: uid,
                     game_type: gameType,
-                    difficulty: diffValue // แยกคะแนนตามความยาก (easy, medium, hard)
+                    difficulty: diffValue
                 }
             });
 
             if (existingScore) {
-                // ✅ กรณีมีของเดิมอยู่แล้ว -> ทำการอัปเดต (Update)
-                
                 if (gameType === 'quiz') {
-                    // 🟢 Quiz: บวกคะแนนเพิ่ม (Accumulate) -> 2000 + 150 = 2150
-                    const newTotal = existingScore.score + finalScore;
-                    
+                    // Quiz บวกทบ
                     await prisma.gameScore.update({
                         where: { gs_id: existingScore.gs_id },
                         data: {
-                            score: newTotal, 
+                            score: existingScore.score + finalScore, 
                             played_at: new Date()
                         }
                     });
-                    console.log(`🔄 [Quiz] Updated Score: ${existingScore.score} + ${finalScore} = ${newTotal}`);
                 } 
                 else {
-                    // 🔴 Virus / อื่นๆ: (ถ้าอยากเก็บ High Score ใช้ Logic นี้)
-                    // ถ้าคะแนนใหม่ มากกว่า ของเดิม ค่อยอัปเดต
+                    // Virus: เก็บ High Score (และเวลาของรอบนั้น)
                     if (finalScore > existingScore.score) {
                         await prisma.gameScore.update({
                             where: { gs_id: existingScore.gs_id },
                             data: {
                                 score: finalScore,
+                                time_taken: duration, // ✅ อัปเดตเวลาด้วย
                                 played_at: new Date()
                             }
                         });
-                        console.log(`🏆 [Virus] New High Score: ${finalScore}`);
-                    } else {
-                        console.log(`zzz [Virus] Score not higher. Kept old: ${existingScore.score}`);
+                        console.log(`🏆 New Highscore: ${finalScore} (Time: ${duration}s)`);
+                    } else if (finalScore === existingScore.score) {
+                        // ถ้าคะแนนเท่ากัน แต่ทำเวลาได้ดีกว่า (น้อยกว่า) ให้เอาอันใหม่
+                        if (duration < existingScore.time_taken) {
+                             await prisma.gameScore.update({
+                                where: { gs_id: existingScore.gs_id },
+                                data: {
+                                    time_taken: duration, // ✅ อัปเดตเวลาที่ดีกว่า
+                                    played_at: new Date()
+                                }
+                            });
+                            console.log(`⚡ Faster Time: ${duration}s (Score tied)`);
+                        }
                     }
                 }
 
             } else {
-                // ✅ กรณีเล่นครั้งแรก -> สร้างใหม่ (Create)
+                // สร้างใหม่
                 await prisma.gameScore.create({
                     data: {
                         uid: uid,
                         score: finalScore,
+                        time_taken: duration, // ✅ บันทึกเวลาเริ่มต้น
                         game_type: gameType,
                         difficulty: diffValue
                     }
                 });
-                console.log(`✨ [New Record] Created first score: ${finalScore}`);
             }
 
-            res.json({ success: true, message: "บันทึกผลสำเร็จ" });
+            res.json({ success: true });
 
         } catch (err) {
-            console.error("❌ Submit Score Error:", err);
-            res.status(500).json({ error: "บันทึกข้อมูลล้มเหลว", details: err.message });
+            console.error("❌ Submit Error:", err);
+            res.status(500).json({ error: "Failed", details: err.message });
         }
     });
 
