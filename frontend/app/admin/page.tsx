@@ -223,17 +223,23 @@ const API_URL = 'http://localhost:4000';
             <div className="bg-gradient-to-br from-blue-600 to-blue-800 p-6 rounded-2xl shadow-lg relative overflow-hidden">
                 <div className="absolute -right-4 -top-4 text-9xl opacity-10">👥</div>
                 <h3 className="text-blue-100 font-bold text-sm uppercase tracking-wider">ผู้เล่นทั้งหมด</h3>
-                <p className="text-5xl font-black text-white mt-2">{data?.overview.totalUsers.toLocaleString()}</p>
+                <p className="text-5xl font-black text-white mt-2">
+                    {data?.overview?.totalUsers?.toLocaleString() || '0'}
+                </p>
             </div>
             <div className="bg-gradient-to-br from-indigo-600 to-purple-800 p-6 rounded-2xl shadow-lg relative overflow-hidden">
                 <div className="absolute -right-4 -top-4 text-9xl opacity-10">📝</div>
                 <h3 className="text-indigo-100 font-bold text-sm uppercase tracking-wider">รอบการเล่น Quiz</h3>
-                <p className="text-5xl font-black text-white mt-2">{data?.overview.totalGames.toLocaleString()}</p>
+                <p className="text-5xl font-black text-white mt-2">
+                    {data?.overview?.totalGames?.toLocaleString() || '0'}
+                </p>
             </div>
             <div className="bg-gradient-to-br from-red-600 to-orange-700 p-6 rounded-2xl shadow-lg relative overflow-hidden">
                 <div className="absolute -right-4 -top-4 text-9xl opacity-10">🦠</div>
                 <h3 className="text-red-100 font-bold text-sm uppercase tracking-wider">รอบการเล่น Virus</h3>
-                <p className="text-5xl font-black text-white mt-2">{data?.overview.totalVirusGames.toLocaleString()}</p>
+                <p className="text-5xl font-black text-white mt-2">
+                    {data?.overview?.totalVirusGames?.toLocaleString() || '0'}
+                </p>
             </div>
         </div>
     </div>
