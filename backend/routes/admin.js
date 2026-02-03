@@ -3,102 +3,63 @@ const router = express.Router();
 
 export default function (prisma) {
 
-    // 1. GET: /stats (แก้ให้ดึงเฉพาะ Hard สำหรับตาราง Hardest Questions)
+    // 1. API: ดึงภาพรวม (Overview)
     router.get('/stats', async (req, res) => {
         try {
-            // --- A. Overview (เหมือนเดิม) ---
             const totalUsers = await prisma.user.count({ where: { role: 'user' } });
-            const totalGames = await prisma.gameScore.count({ where: { game_type: 'quiz' } }); // นับรวมทุกระดับ
+            const totalGames = await prisma.gameScore.count({ where: { game_type: 'quiz' } });
             const totalVirusGames = await prisma.gameScore.count({ where: { game_type: 'virus' } });
 
-            // --- B. Hardest Questions (✅ แก้: กรองเฉพาะ Level Hard) ---
-            const hardQuestions = await prisma.questions.findMany({
-                where: { level: 'hard' }, // ⭐ กรองเฉพาะ Hard
-                include: {
-                    answerLogs: true // ดึงประวัติการตอบมาด้วย
+            res.json({
+                overview: {
+                    totalUsers,
+                    totalGames,
+                    totalVirusGames
                 }
             });
-
-            // คำนวณความยาก
-            const questionStats = hardQuestions.map(q => {
-                const total = q.answerLogs.length;
-                const correct = q.answerLogs.filter(log => log.is_correct).length;
-                const rate = total === 0 ? 0 : (correct / total) * 100;
-                
-                return {
-                    qid: q.qid,
-                    question: q.question,
-                    level: q.level,
-                    correctRate: rate,
-                    totalAttempts: total
-                };
-            })
-            // เรียงจาก "ตอบถูกน้อยสุด" (ยากสุด) ไปมาก
-            .sort((a, b) => a.correctRate - b.correctRate)
-            .slice(0, 10); // เอาแค่ 10 อันดับแรก
-
-            // --- C. Recent Logs (เหมือนเดิม) ---
-            const recentLogs = await prisma.answerLogs.findMany({
-                take: 20,
-                orderBy: { answered_at: 'desc' },
-                include: { user: true, question: true, choice: true }
-            });
-
-            res.json({
-                overview: { totalUsers, totalGames, totalVirusGames },
-                hardestQuestions: questionStats,
-                recentLogs
-            });
-
         } catch (err) {
             console.error(err);
-            res.status(500).json({ error: "Server Error" });
+            res.status(500).json({ error: "Stats error" });
         }
     });
 
-    // ✅ แก้ไข API นี้: กรองเฉพาะ Hard + แบ่งหน้า + เรียงลำดับ
+    // 2. API: ดึงรายการข้อสอบ (ตารางหลัก)
     router.get('/questions', async (req, res) => {
         try {
             const page = parseInt(req.query.page) || 1;
-            const limit = parseInt(req.query.limit) || 10;
+            const limit = parseInt(req.query.limit) || 16;
             const sortOrder = req.query.sort || 'asc'; 
 
-            // 1. ดึงเฉพาะข้อสอบระดับ Hard
             const allQuestions = await prisma.questions.findMany({
-                where: { level: 'hard' }, // ⭐ เพิ่มบรรทัดนี้ครับ
+                where: { level: 'hard' }, 
                 include: {
-                    answerLogs: true
+                    answerLogs: {
+                        select: { is_correct: true }
+                    }
                 }
             });
 
-            // 2. คำนวณ % (เหมือนเดิม)
             const calculatedQuestions = allQuestions.map(q => {
-                const total = q.answerLogs.length;
-                const correct = q.answerLogs.filter(log => log.is_correct).length;
-                const rate = total === 0 ? 0 : (correct / total) * 100;
+                const totalAttempts = q.answerLogs.length;
+                const correctCount = q.answerLogs.filter(log => log.is_correct).length;
+                const correctRate = totalAttempts === 0 ? 0 : (correctCount / totalAttempts) * 100;
 
                 return {
                     qid: q.qid,
                     question: q.question,
                     level: q.level,
-                    correctRate: rate,
-                    totalAttempts: total
+                    correctRate: parseFloat(correctRate.toFixed(1)),
+                    totalAttempts: totalAttempts
                 };
             });
 
-            // 3. เรียงลำดับ (เหมือนเดิม)
             calculatedQuestions.sort((a, b) => {
-                if (sortOrder === 'asc') {
-                    return a.correctRate - b.correctRate;
-                } else {
-                    return b.correctRate - a.correctRate;
-                }
+                if (sortOrder === 'asc') return a.correctRate - b.correctRate;
+                return b.correctRate - a.correctRate;
             });
 
-            // 4. ตัดแบ่งหน้า (เหมือนเดิม)
             const startIndex = (page - 1) * limit;
-            const endIndex = page * limit;
-            const paginatedQuestions = calculatedQuestions.slice(startIndex, endIndex);
+            const paginatedQuestions = calculatedQuestions.slice(startIndex, startIndex + limit);
 
             res.json({
                 questions: paginatedQuestions,
@@ -110,6 +71,52 @@ export default function (prisma) {
         } catch (err) {
             console.error(err);
             res.status(500).json({ error: "Fetch questions failed" });
+        }
+    });
+
+    // 3. API: เจาะลึกรายละเอียดรายข้อ (อันนี้แหละที่ 404 อยู่!)
+    router.get('/question-detail/:id', async (req, res) => {
+        try {
+            const qid = parseInt(req.params.id);
+
+            // 1. ดึงคำถาม + ช้อยส์
+            const question = await prisma.questions.findUnique({
+                where: { qid: qid },
+                include: { choices: true }
+            });
+
+            if (!question) return res.status(404).json({ error: "Not found" });
+
+            // 2. นับคนตอบทั้งหมดของข้อนี้
+            const totalAttempts = await prisma.answerLogs.count({
+                where: { qid: qid }
+            });
+
+            // 3. วนลูปนับแต่ละช้อยส์
+            const breakdown = await Promise.all(question.choices.map(async (choice) => {
+                const count = await prisma.answerLogs.count({
+                    where: { cid: choice.cid }
+                });
+
+                const percent = totalAttempts === 0 ? 0 : (count / totalAttempts) * 100;
+
+                return {
+                    choice_text: choice.choice_text,
+                    is_correct: choice.is_correct,
+                    count: count,
+                    percent: parseFloat(percent.toFixed(1))
+                };
+            }));
+
+            res.json({
+                question: question.question,
+                totalAttempts,
+                breakdown: breakdown
+            });
+
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ error: "Fetch detail failed" });
         }
     });
 
