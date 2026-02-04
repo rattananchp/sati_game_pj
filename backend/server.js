@@ -15,7 +15,7 @@ const port = 4000;
 
 // CORS Config
 app.use(cors({
-  origin: "*", 
+  origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
@@ -23,10 +23,11 @@ app.use(cors({
 app.use(express.json());
 
 console.log('✅ Server is ready with Prisma...');
+console.log('🔄 Restarting to apply Prisma updates...');
 
 // ใช้งาน Routes
-app.use('/', authRoute(prisma));       
-app.use('/questions', questionRoute(prisma)); 
+app.use('/', authRoute(prisma));
+app.use('/questions', questionRoute(prisma));
 app.use('/scores', scoreRoute(prisma));
 app.use('/user', userRoute(prisma)); // ✅ 2. ตรงนี้ต้องเรียก userRoute (ตามที่ import มา)
 app.use('/admin', adminRoute(prisma));

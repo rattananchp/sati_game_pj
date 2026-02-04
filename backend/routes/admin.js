@@ -129,7 +129,7 @@ export default function (prisma) {
         }
     });
 
-// ... (ต่อจาก code เดิม)
+    // ... (ต่อจาก code เดิม)
 
     // 4. API: เพิ่มโจทย์ใหม่ (Add Question)
     router.post('/question/add', async (req, res) => {
@@ -236,41 +236,49 @@ export default function (prisma) {
             res.status(500).json({ error: "แก้ไขข้อมูลไม่สำเร็จ" });
         }
     });
-    // ✅ 7. API: ดึงข้อมูล Virus Leaderboard (ไม่นับซ้ำ: เอาคะแนนสูงสุดของแต่ละคน)
+
+    // ✅ 7. API: ดึงข้อมูล Virus Leaderboard (Logic ใหม่: Fetch All -> Filter Unique -> Slice)
+    // แก้ปัญหา PostgreSQL Error: SELECT DISTINCT ON expressions must match initial ORDER BY expressions
     router.get('/virus/leaderboard', async (req, res) => {
         try {
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 10;
 
-            // 1. ดึงข้อมูลแบบ Distinct (ไม่ซ้ำ User)
-            const scores = await prisma.gameScore.findMany({
+            // 1. ดึงข้อมูลทั้งหมดของโหมด Virus (เรียงคะแนนมากสุด)
+            const allScores = await prisma.gameScore.findMany({
                 where: { game_type: 'virus' },
-                distinct: ['uid'], // ✨ สำคัญ! คำสั่งนี้จะทำให้ User ID ไม่ซ้ำกัน (Prisma จะเลือกแถวแรกที่เจอตาม Order)
                 include: {
                     user: {
                         select: { username: true, email: true }
                     }
                 },
                 orderBy: [
-                    { score: 'desc' },      // เรียงคะแนนมากสุดก่อน (ดังนั้น distinct จะหยิบอันที่คะแนนเยอะสุดมา)
-                    { played_at: 'desc' }   // ถ้าคะแนนเท่ากัน เอาคนเล่นล่าสุด
-                ],
-                skip: (page - 1) * limit,
-                take: limit
+                    { score: 'desc' },
+                    { played_at: 'desc' }
+                ]
             });
 
-            // 2. นับจำนวนผู้เล่นที่ไม่ซ้ำ (เพื่อทำ Pagination)
-            // ใช้ groupBy เพื่อหาจำนวน uid ที่ไม่ซ้ำกันจริงๆ
-            const uniquePlayers = await prisma.gameScore.groupBy({
-                by: ['uid'],
-                where: { game_type: 'virus' }
-            });
-            const total = uniquePlayers.length;
+            // 2. Filter เอาเฉพาะคะแนนที่ดีที่สุดของแต่ละคน (Unique UID)
+            const uniqueMap = new Map();
+            const uniqueScores = [];
+
+            for (const item of allScores) {
+                if (!uniqueMap.has(item.uid)) {
+                    uniqueMap.set(item.uid, true);
+                    uniqueScores.push(item);
+                }
+            }
+
+            // 3. Pagination
+            const total = uniqueScores.length;
+            const totalPages = Math.ceil(total / limit);
+            const startIndex = (page - 1) * limit;
+            const paginatedScores = uniqueScores.slice(startIndex, startIndex + limit);
 
             res.json({
-                scores,
+                scores: paginatedScores,
                 total,
-                totalPages: Math.ceil(total / limit),
+                totalPages: totalPages || 1,
                 currentPage: page
             });
 
@@ -280,5 +288,64 @@ export default function (prisma) {
         }
     });
 
+    // ✅ 8. API: ดึงรายชื่อผู้ใช้งานทั้งหมด (User Management)
+    router.get('/users', async (req, res) => {
+        try {
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            const search = req.query.search || '';
+
+            const whereClause = search ? {
+                OR: [
+                    { username: { contains: search } }, // SQLITE/Postgres: mode: 'insensitive' might be needed depending on DB
+                    { email: { contains: search } }
+                ]
+            } : {};
+
+            const users = await prisma.user.findMany({
+                where: whereClause,
+                select: {
+                    uid: true,
+                    username: true,
+                    email: true,
+                    role: true,
+                    phone: true
+                    // created_at: true // ❌ Field 'created_at' does not exist in User model
+                },
+                orderBy: { uid: 'desc' }, // ✅ Use uid instead of created_at
+                skip: (page - 1) * limit,
+                take: limit
+            });
+
+            const total = await prisma.user.count({ where: whereClause });
+
+            res.json({
+                users,
+                total,
+                totalPages: Math.ceil(total / limit),
+                currentPage: page
+            });
+        } catch (err) {
+            console.error("Fetch Users Error:", err);
+            res.status(500).json({ error: "ดึงข้อมูลผู้ใช้งานไม่สำเร็จ" });
+        }
+    });
+
+    // ✅ 9. API: ลบผู้ใช้งาน (User Management)
+    router.delete('/user/:id', async (req, res) => {
+        const { id } = req.params;
+        try {
+            await prisma.user.delete({
+                where: { uid: parseInt(id) }
+            });
+            res.json({ message: "ลบผู้ใช้งานสำเร็จ" });
+        } catch (err) {
+            console.error("Delete User Error:", err);
+            res.status(500).json({ error: "ลบผู้ใช้งานไม่สำเร็จ (อาจมีข้อมูลเกมที่ผูกอยู่)" });
+        }
+    });
+
+
+
     return router;
-}
+};

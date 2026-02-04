@@ -1,66 +1,62 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { useSound } from '@/context/SoundContext';
 
 export default function BackgroundMusic() {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const { isMuted } = useSound();
 
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
     // 1. ตั้งค่าพื้นฐาน
-    audio.volume = 0.4; // ปรับความดังตรงนี้ (0.0 - 1.0)
-    audio.loop = true;  // เล่นวนซ้ำ
+    audio.volume = 0.4;
+    audio.loop = true;
 
-    // 2. เช็คสถานะ Mute จากที่เคยบันทึกไว้
-    const savedMute = localStorage.getItem('isMuted');
-    if (savedMute) {
-      audio.muted = JSON.parse(savedMute);
-    }
+    // 2. Sync Mute State with Context
+    audio.muted = isMuted;
 
-    // 3. ฟังก์ชันพยายามเล่นเสียง (พร้อมตัวกัน Error)
+    // 3. ฟังก์ชันพยายามเล่นเสียง
     const tryPlay = () => {
-      // ตรวจสอบว่ามีไฟล์พร้อมเล่นหรือไม่
-      if (audio.readyState >= 2 || audio.readyState === 0) {
-        audio.play().catch((err) => {
-          console.log("🔊 Autoplay waiting for user interaction...");
-        });
+      // ถ้า Mute อยู่ ไม่ต้องพยายามเล่น (หรือเล่นแต่เสียงเงียบก็ได้ แต่ Browser อาจ Block ถ้าไม่ได้ mute)
+      // แต่ปกติเราเล่นตลอดแล้วแค่ Mute เอา
+      if (audio.paused) {
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise.catch((error) => {
+            console.log("🔊 Autoplay prevented by browser, waiting for interaction...");
+          });
+        }
       }
     };
 
     // 4. ตัวดักจับการคลิก (เพื่อให้ Browser ยอมให้เสียงดัง)
     const handleUserInteraction = () => {
       tryPlay();
-      // เมื่อคลิกแล้ว ให้เอาตัวดักจับออก (จะได้ไม่ทำงานซ้ำ)
       window.removeEventListener('click', handleUserInteraction);
       window.removeEventListener('keydown', handleUserInteraction);
     };
 
-    // --- เริ่มทำงาน ---
-    
-    // ลองเล่นเลย 1 รอบ (เผื่อ Browser อนุญาต)
+    // ลองเล่นเลย
     tryPlay();
 
-    // เพิ่มตัวดักจับการคลิก
     window.addEventListener('click', handleUserInteraction);
     window.addEventListener('keydown', handleUserInteraction);
 
-    // Cleanup function (เมื่อปิดเว็บ)
     return () => {
       window.removeEventListener('click', handleUserInteraction);
       window.removeEventListener('keydown', handleUserInteraction);
     };
-  }, []);
+  }, [isMuted]); // Re-run/Re-check when mute status changes (mainly for the muted property update)
 
   return (
-    // ซ่อน Audio Element ไว้ แต่ตั้ง ID ให้หน้าอื่นสั่งงานได้
-    <audio 
-      ref={audioRef} 
-      id="global-bgm" 
-      src="/sounds/main_bgm.wav" 
+    <audio
+      ref={audioRef}
+      src="/sounds/main_bgm.wav"
       preload="auto"
-      className="hidden" 
+      className="hidden"
     />
   );
 }

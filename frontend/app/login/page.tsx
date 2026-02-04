@@ -40,13 +40,13 @@ export default function LoginPage() {
 
       // 1. เช็คว่ามี user object ไหม
       if (!data.user) {
-          throw new Error("Server ไม่ส่งข้อมูล User กลับมา");
+        throw new Error("Server ไม่ส่งข้อมูล User กลับมา");
       }
 
       // 2. ดึง ID และ Role ออกมา
       const serverUserId = data.user.uid || data.user.id;
       if (!serverUserId) {
-          throw new Error("Server ส่ง User มา แต่ไม่มี ID");
+        throw new Error("Server ส่ง User มา แต่ไม่มี ID");
       }
 
       // ✅ ดึง Role (ถ้าไม่มีให้เป็น 'user')
@@ -54,12 +54,12 @@ export default function LoginPage() {
 
       // 3. สร้าง object เพื่อบันทึก (รวม Role เข้าไปด้วย)
       const userDataToSave = {
-          uid: serverUserId,        
-          id: serverUserId,         
-          username: data.user.username,
-          email: data.user.email,
-          phone: data.user.phone,
-          role: userRole // ✅ เพิ่ม Role เข้าไปใน LocalStorage
+        uid: serverUserId,
+        id: serverUserId,
+        username: data.user.username,
+        email: data.user.email,
+        phone: data.user.phone,
+        role: userRole // ✅ เพิ่ม Role เข้าไปใน LocalStorage
       };
 
       // 4. บันทึก
@@ -69,18 +69,16 @@ export default function LoginPage() {
       // ============================================
       // 🚦 จุดแยกทาง (Redirect Logic)
       // ============================================
-      
+
       if (userRole === 'admin') {
-          // 👑 ถ้าเป็น Admin -> ไปหน้า Dashboard
-          console.log("👑 Admin Login Success -> Redirecting to Dashboard");
-          router.push('/admin'); 
+        console.log("👑 Admin Login Success -> Redirecting to Home (Admin Button will appear)");
+        router.push('/');
       } else {
-          // 👤 ถ้าเป็น User ธรรมดา -> ไปหน้าเล่นเกม
-          console.log("👋 User Login Success -> Redirecting to Home");
-          router.push('/'); 
+        console.log("👋 User Login Success -> Redirecting to Home");
+        router.push('/');
       }
 
-    } catch (err: unknown) { 
+    } catch (err: unknown) {
       console.error("Login Error:", err);
       if (err instanceof Error) {
         setError(err.message);
@@ -93,12 +91,12 @@ export default function LoginPage() {
 
   return (
     <main className="relative w-screen h-screen flex items-center justify-center p-4 overflow-hidden bg-slate-900 font-sans">
-      
+
       {/* Background Theme */}
       <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900 via-slate-900 to-black"></div>
-          <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/20 blur-[120px] animate-pulse-slow"></div>
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_80%)]"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900 via-slate-900 to-black"></div>
+        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/20 blur-[120px] animate-pulse-slow"></div>
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_80%)]"></div>
       </div>
 
       <div className="relative z-10 w-full max-w-md bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl p-8 shadow-2xl animate-fade-in">
@@ -110,28 +108,28 @@ export default function LoginPage() {
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div>
-            <input 
-              type="text" 
-              placeholder="Username" 
+            <input
+              type="text"
+              placeholder="Username"
               className="w-full p-4 bg-black/40 border border-white/10 rounded-xl text-white focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 transition-all placeholder:text-gray-500"
               value={formData.username}
-              onChange={(e) => setFormData({...formData, username: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
               required
             />
           </div>
           <div>
-            <input 
-              type="password" 
-              placeholder="Password" 
+            <input
+              type="password"
+              placeholder="Password"
               className="w-full p-4 bg-black/40 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-500"
               value={formData.password}
-              onChange={(e) => setFormData({...formData, password: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               required
             />
             <div className="text-right mt-1">
-                <Link href="/forgot_pass" className="text-[10px] text-gray-400 hover:text-purple-300 transition-colors">
-                    ลืมรหัสผ่าน?
-                </Link>
+              <Link href="/forgot_pass" className="text-[10px] text-gray-400 hover:text-purple-300 transition-colors">
+                ลืมรหัสผ่าน?
+              </Link>
             </div>
           </div>
 
@@ -141,8 +139,8 @@ export default function LoginPage() {
             </div>
           )}
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={isLoading}
             className="w-full py-4 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold text-lg uppercase tracking-widest hover:shadow-[0_0_20px_rgba(147,51,234,0.5)] transition-all active:scale-95 disabled:opacity-50"
           >
@@ -153,13 +151,13 @@ export default function LoginPage() {
         <div className="mt-8 text-center">
           <p className="text-gray-400 text-sm">
             ยังไม่มีบัญชีใช่ไหม?{' '}
-            <Link     
-              href="/register" 
+            <Link
+              href="/register"
               className="text-purple-400 font-bold hover:text-purple-300 hover:underline transition-all"
             >
               สมัครสมาชิกใหม่
             </Link>
-          </p> 
+          </p>
         </div>
       </div>
     </main>
