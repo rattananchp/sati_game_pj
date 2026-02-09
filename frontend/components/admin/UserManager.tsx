@@ -35,25 +35,31 @@ export default function UserManager({ API_URL }: UserManagerProps) {
         return () => clearTimeout(timer);
     }, [page, search, API_URL]);
 
-    const handleDelete = async (uid: number, username: string) => {
-        if (!confirm(`⚠️ คุณแน่ใจหรือไม่ว่าจะลบผู้ใช้ "${username}"?\n(ข้อมูลทุกอย่างของผู้ใช้นี้จะถูกลบถาวร)`)) return;
+
+    const handleDelete = async (uid: number) => {
+        if (!confirm("คุณต้องการลบผู้ใช้งานคนนี้ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้")) return;
 
         try {
-            const res = await fetch(`${API_URL}/admin/user/${uid}`, { method: 'DELETE' });
+            const res = await fetch(`${API_URL}/admin/user/${uid}`, {
+                method: 'DELETE',
+            });
+            const data = await res.json();
+
             if (res.ok) {
-                alert("✅ ลบผู้ใช้สำเร็จ");
+                alert("ลบผู้ใช้งานเรียบร้อยแล้ว");
                 fetchUsers();
             } else {
-                alert("❌ ลบผู้ใช้ไม่สำเร็จ");
+                alert(data.error || "ลบผู้ใช้งานไม่สำเร็จ");
             }
-        } catch (error) {
-            console.error(error);
-            alert("❌ เชื่อมต่อ Server ไม่ได้");
+        } catch (err) {
+            console.error("Delete error:", err);
+            alert("เชื่อมต่อ Server ไม่ได้");
         }
     };
 
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 h-full flex flex-col">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 h-full flex flex-col relative">
+
             <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
                 <div className="flex items-center gap-3">
                     <span className="text-4xl animate-bounce filter drop-shadow hover:scale-110 transition cursor-default">👥</span>
@@ -89,10 +95,10 @@ export default function UserManager({ API_URL }: UserManagerProps) {
                         <thead className="bg-slate-950/80 text-gray-400 uppercase text-xs sticky top-0 z-10 backdrop-blur-md">
                             <tr>
                                 <th className="p-4 w-[5%] text-center">ID</th>
-                                <th className="p-4 w-[25%]">ผู้ใช้งาน</th>
-                                <th className="p-4 w-[30%]">ข้อมูลติดต่อ</th>
-                                <th className="p-4 w-[20%] text-center">สถานะ</th>
-                                <th className="p-4 w-[20%] text-center">จัดการ</th>
+                                <th className="p-4 w-[30%]">ผู้ใช้งาน</th>
+                                <th className="p-4 w-[35%]">ข้อมูลติดต่อ</th>
+                                <th className="p-4 w-[15%] text-center">สถานะ</th>
+                                <th className="p-4 w-[15%] text-center">จัดการ</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
@@ -101,7 +107,7 @@ export default function UserManager({ API_URL }: UserManagerProps) {
                             ) : users.length === 0 ? (
                                 <tr><td colSpan={5} className="p-20 text-center text-gray-500">ไม่พบรายชื่อผู้เล่น</td></tr>
                             ) : users.map((u) => (
-                                <tr key={u.uid} className="hover:bg-indigo-900/10 transition-colors group">
+                                <tr key={u.uid} className={`hover:bg-indigo-900/10 transition-colors group`}>
                                     <td className="p-4 text-center text-gray-600 font-mono">#{u.uid}</td>
                                     <td className="p-4">
                                         <div className="flex items-center gap-3">
@@ -121,7 +127,8 @@ export default function UserManager({ API_URL }: UserManagerProps) {
                                         </div>
                                     </td>
                                     <td className="p-4 text-center">
-                                        <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${u.role === 'admin' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : 'bg-green-500/10 text-green-400 border-green-500/20'
+                                        <span className={`px-3 py-1.5 rounded-full text-xs font-bold tracking-wide border ${u.role === 'admin' ? 'bg-purple-500/10 text-purple-400 border-purple-500/30 shadow-[0_0_10px_rgba(168,85,247,0.2)]' :
+                                            'bg-green-500/10 text-green-400 border-green-500/30 shadow-[0_0_10px_rgba(74,222,128,0.1)]'
                                             }`}>
                                             {u.role === 'admin' ? 'ผู้ดูแลระบบ' : 'ผู้เล่นทั่วไป'}
                                         </span>
@@ -129,9 +136,9 @@ export default function UserManager({ API_URL }: UserManagerProps) {
                                     <td className="p-4 text-center">
                                         {u.role !== 'admin' && (
                                             <button
-                                                onClick={() => handleDelete(u.uid, u.username)}
+                                                onClick={() => handleDelete(u.uid)}
                                                 className="p-2 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500 hover:text-white transition active:scale-95 border border-red-500/20"
-                                                title="ลบผู้ใช้"
+                                                title="ลบผู้ใช้งาน"
                                             >
                                                 🗑️
                                             </button>

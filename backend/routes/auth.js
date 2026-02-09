@@ -4,7 +4,7 @@ import bcrypt from 'bcrypt';
 
 export default function (prisma) {
     const router = express.Router();
-    console.log("🔥 Auth Route Loaded! (Ready)"); 
+    console.log("🔥 Auth Route Loaded! (Ready)");
 
     // 1. Register (สมัครสมาชิก)
     router.post('/register', async (req, res) => {
@@ -38,19 +38,19 @@ export default function (prisma) {
                     password: hashedPassword,
                     email,
                     phone,
-                    birthdate: new Date(birthdate), 
+                    birthdate: new Date(birthdate),
                     address
                 }
             });
 
             // ✅ ถูกต้อง: ส่ง uid กลับไป
-            res.json({ 
-                message: "สมัครสมาชิกเรียบร้อย!", 
-                user: { 
-                    uid: newUser.uid, 
-                    username: newUser.username, 
+            res.json({
+                message: "สมัครสมาชิกเรียบร้อย!",
+                user: {
+                    uid: newUser.uid,
+                    username: newUser.username,
                     role: newUser.role
-                } 
+                }
             });
 
         } catch (err) {
@@ -85,7 +85,7 @@ export default function (prisma) {
                         email: user.email,
                         phone: user.phone,
                         role: user.role
-                        
+
                     }
                 });
             } else {
@@ -106,25 +106,25 @@ export default function (prisma) {
             const user = await prisma.user.findFirst({
                 where: {
                     username: username,
-                    phone: phone 
+                    phone: phone
                 }
             });
-            
+
             if (!user) {
                 return res.status(404).json({ error: "ไม่พบข้อมูล หรือเบอร์โทรศัพท์ไม่ถูกต้อง" });
             }
-            
+
             const hashedPassword = await bcrypt.hash(newPassword, 10);
 
             await prisma.user.update({
                 where: { uid: user.uid }, // ✅ ถูกต้อง: ใช้ uid ในการอ้างอิง
                 data: { password: hashedPassword }
             });
-            
+
             res.json({ success: true, message: "เปลี่ยนรหัสผ่านสำเร็จ!" });
 
         } catch (err) {
-            console.error("Reset Password Error:", err); 
+            console.error("Reset Password Error:", err);
             res.status(500).json({ error: "เปลี่ยนรหัสผ่านไม่สำเร็จ" });
         }
     });

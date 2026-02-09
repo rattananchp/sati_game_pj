@@ -21,11 +21,24 @@ export default function (prisma) {
         console.log(`📥 Processing Score: User ${uid} | ${gameType} | +${newScore}`);
 
         try {
+            // ✅ Check Ban Status
+            const user = await prisma.user.findUnique({ where: { uid: uid } });
+            if (user && user.is_banned) {
+                if (user.ban_expires_at && new Date() > new Date(user.ban_expires_at)) {
+                    await prisma.user.update({
+                        where: { uid: user.uid },
+                        data: { is_banned: false, ban_reason: null, ban_expires_at: null }
+                    });
+                } else {
+                    return res.status(403).json({ error: `คุณถูกระงับการใช้งาน: ${user.ban_reason}` });
+                }
+            }
+
             // ==================================================
             // 1. เก็บประวัติการเล่น (History) - เก็บทุกรอบที่เล่น เพื่อดู Graph ใน Admin
             // ==================================================
             if (gameType === 'quiz' && logs && logs.length > 0) {
-                 await prisma.game.create({
+                await prisma.game.create({
                     data: {
                         uid: uid,
                         total_score: newScore,
@@ -48,7 +61,7 @@ export default function (prisma) {
             // ==================================================
             // 2. อัปเดตคะแนนรวม (Leaderboard) - ส่วนนี้แหละที่ต้องแก้!
             // ==================================================
-            
+
             // 2.1 หาคะแนนเก่าของ User นี้ ในโหมดนี้ และระดับความยากนี้
             const existingScore = await prisma.gameScore.findFirst({
                 where: {
@@ -111,10 +124,10 @@ export default function (prisma) {
     // ==========================================
     router.get('/leaderboard', async (req, res) => {
         const { type } = req.query; // 'quiz_hard' หรือ 'virus'
-        
+
         try {
             let whereCondition = {};
-            
+
             if (type === 'quiz_hard') {
                 whereCondition = { game_type: 'quiz', difficulty: 'hard' };
             } else if (type === 'virus') {
@@ -126,7 +139,7 @@ export default function (prisma) {
             // ดึงข้อมูลดิบมาคำนวณ
             const allScores = await prisma.gameScore.findMany({
                 where: whereCondition,
-                include: { user: true }, 
+                include: { user: true },
             });
 
             // คำนวณจัดอันดับ
@@ -140,7 +153,7 @@ export default function (prisma) {
                     leaderboardMap.set(uid, {
                         username: record.user.username,
                         score: 0,
-                        avatar: '😎' 
+                        avatar: '😎'
                     });
                 }
 
@@ -155,7 +168,7 @@ export default function (prisma) {
 
             // เรียงจากมากไปน้อย -> ตัดมา 20 คนแรก
             const result = Array.from(leaderboardMap.values())
-                .sort((a, b) => b.score - a.score) 
+                .sort((a, b) => b.score - a.score)
                 .slice(0, 20);
 
             res.json(result);

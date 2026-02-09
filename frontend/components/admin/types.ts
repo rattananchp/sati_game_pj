@@ -52,6 +52,9 @@ export interface User {
     email: string;
     role: string;
     phone: string;
+    is_banned?: boolean;
+    ban_reason?: string;
+    ban_expires_at?: string;
 }
 
 export type ViewState = 'dashboard' | 'quiz_manage' | 'virus_manage' | 'users' | 'add_question';

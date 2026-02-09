@@ -22,6 +22,12 @@ app.use(cors({
 
 app.use(express.json());
 
+// ✅ Debug Middleware: Log all requests
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
+
 console.log('✅ Server is ready with Prisma...');
 console.log('🔄 Restarting to apply Prisma updates...');
 

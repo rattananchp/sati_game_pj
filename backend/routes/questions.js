@@ -5,18 +5,33 @@ export default function (prisma) {
     const router = express.Router();
 
     router.get('/', async (req, res) => {
-        const { level } = req.query;
+        const { level, userId } = req.query;
 
         if (!level) {
             return res.status(400).json({ error: 'กรุณาระบุระดับความยาก (level)' });
         }
 
         try {
+            // ✅ Check Ban Status if userId is provided
+            if (userId) {
+                const user = await prisma.user.findUnique({ where: { uid: parseInt(userId) } });
+                if (user && user.is_banned) {
+                    if (user.ban_expires_at && new Date() > new Date(user.ban_expires_at)) {
+                        await prisma.user.update({
+                            where: { uid: user.uid },
+                            data: { is_banned: false, ban_reason: null, ban_expires_at: null }
+                        });
+                    } else {
+                        return res.status(403).json({ error: `คุณถูกระงับการใช้งาน: ${user.ban_reason}` });
+                    }
+                }
+            }
+
             // 1. ดึงคำถามทั้งหมดใน Level นั้น (พร้อม Choices)
             // เช็คชื่อ Model: ใน Schema เป็น "Questions" (มี s) -> prisma.questions
             const allQuestions = await prisma.questions.findMany({
                 where: { level: level },
-                include: { choices: true } 
+                include: { choices: true }
             });
 
             if (allQuestions.length === 0) {

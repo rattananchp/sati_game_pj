@@ -297,7 +297,7 @@ export default function (prisma) {
 
             const whereClause = search ? {
                 OR: [
-                    { username: { contains: search } }, // SQLITE/Postgres: mode: 'insensitive' might be needed depending on DB
+                    { username: { contains: search } },
                     { email: { contains: search } }
                 ]
             } : {};
@@ -333,19 +333,23 @@ export default function (prisma) {
 
     // ✅ 9. API: ลบผู้ใช้งาน (User Management)
     router.delete('/user/:id', async (req, res) => {
-        const { id } = req.params;
         try {
+            const uid = parseInt(req.params.id);
+
+            // ป้องกันการลบตัวเองหรือ Admin (ถ้ามี Logic auth request user)
+            // แต่ในที่นี้ Admin เป็นคนยิง API
+
             await prisma.user.delete({
-                where: { uid: parseInt(id) }
+                where: { uid: uid }
             });
-            res.json({ message: "ลบผู้ใช้งานสำเร็จ" });
+
+            console.log(`🗑️ Deleted User ID: ${uid}`);
+            res.json({ success: true, message: "ลบผู้ใช้งานสำเร็จ" });
         } catch (err) {
             console.error("Delete User Error:", err);
-            res.status(500).json({ error: "ลบผู้ใช้งานไม่สำเร็จ (อาจมีข้อมูลเกมที่ผูกอยู่)" });
+            res.status(500).json({ error: "ลบผู้ใช้งานไม่สำเร็จ" });
         }
     });
-
-
 
     return router;
 };

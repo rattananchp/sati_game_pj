@@ -20,7 +20,7 @@ export default function QuestionDetailModal({ question, onClose, details, isLoad
                     <div className="text-center py-8 text-sm text-gray-400 animate-pulse bg-white/5 rounded-xl">กำลังดึงข้อมูลสถิติ...</div>
                 ) : (
                     <div className="space-y-4">
-                        {details.map((detail, index) => (
+                        {[...details].sort((a, b) => b.percent - a.percent).map((detail, index) => (
                             <div key={index} className="relative group">
                                 <div className="flex justify-between items-center mb-1 text-sm z-10 relative">
                                     <span className={`font-bold truncate max-w-[70%] flex items-center gap-2 ${detail.is_correct ? 'text-green-400' : 'text-gray-400'}`}>
@@ -30,7 +30,7 @@ export default function QuestionDetailModal({ question, onClose, details, isLoad
                                 </div>
                                 <div className="w-full h-8 bg-black/40 rounded-lg overflow-hidden relative border border-white/5">
                                     <div
-                                        className={`h-full transition-all duration-1000 ease-out flex items-center justify-end pr-2 ${detail.is_correct ? 'bg-gradient-to-r from-green-900/50 to-green-600/50 border-r-2 border-green-500' : 'bg-gray-700/30'}`}
+                                        className={`h-full transition-all duration-1000 ease-out flex items-center justify-end pr-2 ${detail.is_correct ? 'bg-gradient-to-r from-green-900/50 to-green-600/50 border-r-2 border-green-500' : 'bg-gradient-to-r from-red-900/50 to-red-600/50 border-r-2 border-red-500'}`}
                                         style={{ width: `${Math.max(detail.percent, 0)}%` }}
                                     >
                                     </div>
