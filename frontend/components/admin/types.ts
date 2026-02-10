@@ -55,6 +55,7 @@ export interface User {
     is_banned?: boolean;
     ban_reason?: string;
     ban_expires_at?: string;
+    total_games?: number; // ✅ เพิ่ม: จำนวนเกมที่เล่น
 }
 
 export type ViewState = 'dashboard' | 'quiz_manage' | 'virus_manage' | 'users' | 'add_question';

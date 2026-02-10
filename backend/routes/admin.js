@@ -7,7 +7,7 @@ export default function (prisma) {
     router.get('/stats', async (req, res) => {
         try {
             const totalUsers = await prisma.user.count({ where: { role: 'user' } });
-            const totalGames = await prisma.gameScore.count({ where: { game_type: 'quiz' } });
+            const totalGames = await prisma.game.count(); // ✅ นับจากตารางประวัติการเล่น (Game) แทน Leaderboard
             const totalVirusGames = await prisma.gameScore.count({ where: { game_type: 'virus' } });
 
             res.json({
@@ -302,6 +302,8 @@ export default function (prisma) {
                 ]
             } : {};
 
+
+
             const users = await prisma.user.findMany({
                 where: whereClause,
                 select: {
@@ -309,18 +311,25 @@ export default function (prisma) {
                     username: true,
                     email: true,
                     role: true,
-                    phone: true
-                    // created_at: true // ❌ Field 'created_at' does not exist in User model
+                    phone: true,
+                    scores: true // ✅ ดึงข้อมูล score ทั้งหมดมานับจำนวนแทน (เพราะไม่ได้ update db field play_count)
                 },
-                orderBy: { uid: 'desc' }, // ✅ Use uid instead of created_at
+                orderBy: { uid: 'desc' },
                 skip: (page - 1) * limit,
                 take: limit
             });
 
+            // ✅ คำนวณจำนวนเกมทั้งหมดที่เล่น (ตัดออกตาม request)
+            const usersWithStats = users.map(u => ({
+                ...u,
+                // total_games: u.scores ? u.scores.length : 0, 
+                scores: undefined // ลบ scores ออกจาก response เพื่อไม่ให้รก
+            }));
+
             const total = await prisma.user.count({ where: whereClause });
 
             res.json({
-                users,
+                users: usersWithStats,
                 total,
                 totalPages: Math.ceil(total / limit),
                 currentPage: page

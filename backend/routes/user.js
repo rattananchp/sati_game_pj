@@ -88,5 +88,13 @@ export default function (prisma) {
         }
     });
 
+    // ==========================================
+    // 3. Check Ban Status (Dummy for now)
+    // ==========================================
+    router.get('/status/:id', async (req, res) => {
+        // Return not banned by default to satisfy frontend check
+        res.json({ is_banned: false });
+    });
+
     return router;
 }

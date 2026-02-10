@@ -37,7 +37,9 @@ export default function (prisma) {
             // ==================================================
             // 1. เก็บประวัติการเล่น (History) - เก็บทุกรอบที่เล่น เพื่อดู Graph ใน Admin
             // ==================================================
-            if (gameType === 'quiz' && logs && logs.length > 0) {
+            if (gameType === 'quiz') {
+                const answerLogs = (logs || []).filter(l => l.cid !== -1);
+
                 await prisma.game.create({
                     data: {
                         uid: uid,
@@ -45,14 +47,12 @@ export default function (prisma) {
                         time_taken: timeTaken || 0,
                         finished_at: new Date(),
                         answerLogs: {
-                            create: logs
-                                .filter(l => l.cid !== -1)
-                                .map(log => ({
-                                    uid: uid,
-                                    qid: log.qid,
-                                    cid: log.cid,
-                                    is_correct: log.is_correct
-                                }))
+                            create: answerLogs.map(log => ({
+                                uid: uid,
+                                qid: log.qid,
+                                cid: log.cid,
+                                is_correct: log.is_correct
+                            }))
                         }
                     }
                 });
@@ -79,10 +79,10 @@ export default function (prisma) {
                         where: { gs_id: existingScore.gs_id },
                         data: {
                             score: existingScore.score + newScore, // คะแนนเก่า + คะแนนใหม่
-                            played_at: new Date() // อัปเดตเวลาล่าสุด
+                            played_at: new Date(), // อัปเดตเวลาล่าสุด
                         }
                     });
-                    console.log(`✅ [Quiz] Score Updated: ${existingScore.score} + ${newScore} = ${existingScore.score + newScore}`);
+                    console.log(`✅ [Quiz] Score Updated: ${existingScore.score} + ${newScore} = ${existingScore.score + newScore} | Play Count: ${existingScore.play_count + 1}`);
                 } else {
                     // 👉 ถ้าเป็น Virus/อื่นๆ ให้ "เช็ค High Score" (เอาค่ามากสุด)
                     if (newScore > existingScore.score) {
@@ -90,12 +90,20 @@ export default function (prisma) {
                             where: { gs_id: existingScore.gs_id },
                             data: {
                                 score: newScore,
+                                played_at: new Date(),
+                                play_count: { increment: 1 } // ✅ บวกจำนวนรอบ
+                            }
+                        });
+                        console.log(`✅ [Virus] New High Score: ${newScore} | Play Count: ${existingScore.play_count + 1}`);
+                    } else {
+                        // 👉 คะแนนไม่ถึง High Score แต่อัปเดตจำนวนรอบ และเวลาเล่นล่าสุด
+                        await prisma.gameScore.update({
+                            where: { gs_id: existingScore.gs_id },
+                            data: {
                                 played_at: new Date()
                             }
                         });
-                        console.log(`✅ [Virus] New High Score: ${newScore}`);
-                    } else {
-                        console.log(`ℹ️ [Virus] Score ${newScore} is not higher than ${existingScore.score}. Skipped.`);
+                        console.log(`ℹ️ [Virus] Score ${newScore} is not higher than ${existingScore.score}. Updated Play Count: ${existingScore.play_count + 1}`);
                     }
                 }
             } else {
@@ -182,6 +190,9 @@ export default function (prisma) {
     // ==========================================
     // 3. User Stats (เหมือนเดิม)
     // ==========================================
+    // ==========================================
+    // 3. User Stats
+    // ==========================================
     router.get('/stats', async (req, res) => {
         const { userId } = req.query;
 
@@ -192,32 +203,28 @@ export default function (prisma) {
         try {
             const uid = parseInt(userId);
 
-            // ดึงข้อมูลมานับจำนวน (ใช้ groupBy)
-            const statsGroup = await prisma.gameScore.groupBy({
-                by: ['game_type'],
-                where: { uid: uid },
-                _count: { game_type: true }
+            // 1. Quiz Count (✅ นับจากประวัติการเล่นจริง Game)
+            const quizCount = await prisma.game.count({
+                where: { uid: uid }
             });
 
-            // ค่าเริ่มต้น
-            const result = { quiz: 0, virus: 0, chat: 0 };
-
-            // วนลูปใส่ค่า
-            statsGroup.forEach(item => {
-                const type = item.game_type;
-                const count = item._count.game_type;
-
-                // รวม normal/hard เป็น quiz
-                if (type === 'quiz' || type === 'normal' || type === 'hard') {
-                    result.quiz += count;
-                } else if (type === 'virus') {
-                    result.virus += count;
-                } else if (type === 'chat') {
-                    result.chat += count;
-                }
+            // 2. Virus Count (✅ นับว่ามีบันทึกคะแนนหรือไม่ - เพราะไม่มี Play Count Field)
+            const virusRecord = await prisma.gameScore.findFirst({
+                where: { uid: uid, game_type: 'virus' }
             });
+            const virusCount = virusRecord ? 1 : 0; // ถ้ามี record = เล่นแล้ว (อย่างน้อย 1 ครั้ง)
 
-            res.json(result);
+            // 3. Chat Count (ถ้ามี)
+            const chatRecord = await prisma.gameScore.findFirst({
+                where: { uid: uid, game_type: 'chat' }
+            });
+            const chatCount = chatRecord ? 1 : 0;
+
+            res.json({
+                quiz: quizCount,
+                virus: virusCount,
+                chat: chatCount
+            });
 
         } catch (err) {
             console.error("Stats Error:", err);

@@ -226,16 +226,15 @@ export default function ProfilePage() {
                             <div className="absolute -inset-4 bg-gradient-to-tr from-purple-600 to-blue-600 rounded-full blur-xl opacity-40 group-hover:opacity-60 transition duration-500 animate-pulse-slow"></div>
 
                             {/* Circle Container */}
-                            <div className="relative w-28 h-28 md:w-32 md:h-32 rounded-full p-[4px] bg-gradient-to-tr from-purple-500 to-blue-500 shadow-2xl">
-                                <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center relative overflow-hidden group-hover:scale-[1.02] transition-transform duration-300">
-                                    {/* Initials Text */}
-                                    <span className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white to-gray-400 select-none">
-                                        {user?.username ? user.username.charAt(0).toUpperCase() : '?'}
-                                    </span>
+                            <div className="relative w-28 h-28 md:w-32 md:h-32 rounded-full bg-gradient-to-tr from-purple-500 to-blue-500 shadow-2xl flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
 
-                                    {/* Inner Shine */}
-                                    <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-white/10 to-transparent rounded-t-full pointer-events-none"></div>
-                                </div>
+                                {/* Initials Text */}
+                                <span className="text-5xl md:text-6xl font-black text-white select-none drop-shadow-md">
+                                    {user?.username ? user.username.charAt(0).toUpperCase() : '?'}
+                                </span>
+
+                                {/* Inner Shine */}
+                                <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-white/20 to-transparent rounded-t-full pointer-events-none"></div>
 
                                 {/* Status Dot */}
                                 <div className="absolute bottom-1 right-1 w-6 h-6 bg-green-500 border-4 border-slate-900 rounded-full shadow-lg"></div>

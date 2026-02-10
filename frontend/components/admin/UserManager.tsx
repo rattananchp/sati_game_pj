@@ -18,9 +18,13 @@ export default function UserManager({ API_URL }: UserManagerProps) {
         try {
             const res = await fetch(`${API_URL}/admin/users?page=${page}&limit=10&search=${search}`);
             const json = await res.json();
-            setUsers(json.users);
-            setTotalPage(json.totalPages);
-            setTotalUsers(json.total);
+            if (json.users) {
+                setUsers(json.users);
+                setTotalPage(json.totalPages || 1);
+                setTotalUsers(json.total || 0);
+            } else {
+                setUsers([]);
+            }
         } catch (err) {
             console.error(err);
         } finally {
@@ -53,6 +57,27 @@ export default function UserManager({ API_URL }: UserManagerProps) {
             }
         } catch (err) {
             console.error("Delete error:", err);
+            alert("เชื่อมต่อ Server ไม่ได้");
+        }
+    };
+
+    const handleResetScore = async (uid: number) => {
+        if (!confirm("คุณต้องการ 'ล้างคะแนน' ของผู้เล่นคนนี้ใช่หรือไม่? \n(ประวัติการเล่นทั้งหมดจะหายไป แต่บัญชีจะยังอยู่)")) return;
+
+        try {
+            const res = await fetch(`${API_URL}/admin/user-scores/${uid}`, {
+                method: 'DELETE',
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                alert("ล้างคะแนนเรียบร้อยแล้ว");
+                fetchUsers(); // Refresh data check
+            } else {
+                alert(data.error || "ล้างคะแนนไม่สำเร็จ");
+            }
+        } catch (err) {
+            console.error("Reset score error:", err);
             alert("เชื่อมต่อ Server ไม่ได้");
         }
     };
@@ -95,17 +120,17 @@ export default function UserManager({ API_URL }: UserManagerProps) {
                         <thead className="bg-slate-950/80 text-gray-400 uppercase text-xs sticky top-0 z-10 backdrop-blur-md">
                             <tr>
                                 <th className="p-4 w-[5%] text-center">ID</th>
-                                <th className="p-4 w-[30%]">ผู้ใช้งาน</th>
-                                <th className="p-4 w-[35%]">ข้อมูลติดต่อ</th>
+                                <th className="p-4 w-[25%]">ผู้ใช้งาน</th>
+                                <th className="p-4 w-[30%]">ข้อมูลติดต่อ</th>
                                 <th className="p-4 w-[15%] text-center">สถานะ</th>
                                 <th className="p-4 w-[15%] text-center">จัดการ</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
                             {isLoading ? (
-                                <tr><td colSpan={5} className="p-20 text-center text-gray-500 animate-pulse">กำลังโหลดข้อมูล...</td></tr>
+                                <tr><td colSpan={6} className="p-20 text-center text-gray-500 animate-pulse">กำลังโหลดข้อมูล...</td></tr>
                             ) : users.length === 0 ? (
-                                <tr><td colSpan={5} className="p-20 text-center text-gray-500">ไม่พบรายชื่อผู้เล่น</td></tr>
+                                <tr><td colSpan={6} className="p-20 text-center text-gray-500">ไม่พบรายชื่อผู้เล่น</td></tr>
                             ) : users.map((u) => (
                                 <tr key={u.uid} className={`hover:bg-indigo-900/10 transition-colors group`}>
                                     <td className="p-4 text-center text-gray-600 font-mono">#{u.uid}</td>
@@ -126,6 +151,8 @@ export default function UserManager({ API_URL }: UserManagerProps) {
                                             <div className="flex items-center gap-1">📱 {u.phone || '-'}</div>
                                         </div>
                                     </td>
+
+
                                     <td className="p-4 text-center">
                                         <span className={`px-3 py-1.5 rounded-full text-xs font-bold tracking-wide border ${u.role === 'admin' ? 'bg-purple-500/10 text-purple-400 border-purple-500/30 shadow-[0_0_10px_rgba(168,85,247,0.2)]' :
                                             'bg-green-500/10 text-green-400 border-green-500/30 shadow-[0_0_10px_rgba(74,222,128,0.1)]'
@@ -143,13 +170,20 @@ export default function UserManager({ API_URL }: UserManagerProps) {
                                                 🗑️
                                             </button>
                                         )}
+                                        <button
+                                            onClick={() => handleResetScore(u.uid)}
+                                            className="p-2 ml-2 bg-yellow-500/10 text-yellow-400 rounded-lg hover:bg-yellow-500 hover:text-white transition active:scale-95 border border-yellow-500/20"
+                                            title="ล้างคะแนน (Reset Score)"
+                                        >
+                                            🔄
+                                        </button>
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }

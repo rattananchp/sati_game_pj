@@ -2,7 +2,7 @@ import express from 'express';
 const router = express.Router();
 
 export default function (prisma) {
-    
+
     // POST: /submit-score
     router.post('/', async (req, res) => {
         const { userId, score, gameType, difficulty, logs, timeTaken } = req.body;
@@ -20,27 +20,41 @@ export default function (prisma) {
 
         console.log(`📥 Receiving: User ${uid} | ${gameType} | ${finalScore} pts | ${duration}s`);
 
+        // 🛡️ Anti-Cheat: ป้องกันการกดจบเกมไวเกินไป (Auto-Clicker)
+        // ถ้าเล่นจบเร็วกว่า 5 วินาที -> ไม่บันทึก
+        if (duration < 5) {
+            console.warn(`⚠️ [Anti-Cheat] Suspicious activity detected! User ${uid} finished in ${duration}s. Score ignored.`);
+            return res.json({ success: true, message: "Score ignored due to suspicious activity." });
+        }
+
         try {
             // A. บันทึก History (เหมือนเดิม)
-            if (gameType === 'quiz' && logs && logs.length > 0) {
-                 await prisma.game.create({
-                    data: {
-                        uid: uid,
-                        total_score: finalScore,
-                        time_taken: duration,
-                        finished_at: new Date(),
-                        answerLogs: {
-                            create: logs
-                                .filter(l => l.cid !== -1)
-                                .map(log => ({
+            console.log(`🔍 Checking Game Type: ${gameType}`);
+            if (gameType === 'quiz') {
+                const answerLogs = (logs || []).filter(l => l.cid !== -1);
+                console.log(`📝 Prepared Answer Logs: ${answerLogs.length} items`);
+
+                try {
+                    await prisma.game.create({
+                        data: {
+                            uid: uid,
+                            total_score: finalScore,
+                            time_taken: duration,
+                            finished_at: new Date(),
+                            answerLogs: {
+                                create: answerLogs.map(log => ({
                                     uid: uid,
                                     qid: log.qid,
                                     cid: log.cid,
                                     is_correct: log.is_correct
                                 }))
+                            }
                         }
-                    }
-                });
+                    });
+                    console.log(`✅ [History] Game record created successfully for User ${uid}`);
+                } catch (historyErr) {
+                    console.error(`❌ [History] Failed to create game record:`, historyErr);
+                }
             }
 
             // B. บันทึก Leaderboard (แก้ไขใหม่ให้เก็บเวลาด้วย)
@@ -58,11 +72,11 @@ export default function (prisma) {
                     await prisma.gameScore.update({
                         where: { gs_id: existingScore.gs_id },
                         data: {
-                            score: existingScore.score + finalScore, 
+                            score: existingScore.score + finalScore,
                             played_at: new Date()
                         }
                     });
-                } 
+                }
                 else {
                     // Virus: เก็บ High Score (และเวลาของรอบนั้น)
                     if (finalScore > existingScore.score) {
@@ -78,7 +92,7 @@ export default function (prisma) {
                     } else if (finalScore === existingScore.score) {
                         // ถ้าคะแนนเท่ากัน แต่ทำเวลาได้ดีกว่า (น้อยกว่า) ให้เอาอันใหม่
                         if (duration < existingScore.time_taken) {
-                             await prisma.gameScore.update({
+                            await prisma.gameScore.update({
                                 where: { gs_id: existingScore.gs_id },
                                 data: {
                                     time_taken: duration, // ✅ อัปเดตเวลาที่ดีกว่า
