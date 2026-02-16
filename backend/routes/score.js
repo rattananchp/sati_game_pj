@@ -21,18 +21,9 @@ export default function (prisma) {
         console.log(`📥 Processing Score: User ${uid} | ${gameType} | +${newScore}`);
 
         try {
-            // ✅ Check Ban Status
-            const user = await prisma.user.findUnique({ where: { uid: uid } });
-            if (user && user.is_banned) {
-                if (user.ban_expires_at && new Date() > new Date(user.ban_expires_at)) {
-                    await prisma.user.update({
-                        where: { uid: user.uid },
-                        data: { is_banned: false, ban_reason: null, ban_expires_at: null }
-                    });
-                } else {
-                    return res.status(403).json({ error: `คุณถูกระงับการใช้งาน: ${user.ban_reason}` });
-                }
-            }
+            // ✅ Ban Check Removed (System Disabled)
+            // const user = await prisma.user.findUnique({ where: { uid: uid } });
+            // if (user && user.is_banned) ...
 
             // ==================================================
             // 1. เก็บประวัติการเล่น (History) - เก็บทุกรอบที่เล่น เพื่อดู Graph ใน Admin

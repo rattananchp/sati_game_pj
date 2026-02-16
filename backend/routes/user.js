@@ -115,6 +115,11 @@ export default function (prisma) {
                 return res.status(404).json({ error: "User not found" });
             }
 
+            // 🔥 SYSTEM FORCE: Remove Ban System
+            user.is_banned = false;
+            user.ban_reason = null;
+            user.ban_expires_at = null;
+
             res.json(user);
 
         } catch (err) {

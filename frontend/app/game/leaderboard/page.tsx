@@ -30,13 +30,17 @@ export default function LeaderboardPage() {
             const userStr = localStorage.getItem('user');
             const currentUser = userStr ? JSON.parse(userStr) : null;
 
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            // ✅ Auto-detect Environment
+            let apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+                apiUrl = 'http://localhost:4000';
+            }
             const res = await fetch(`${apiUrl}/scores/leaderboard?type=${type}`);
-            
+
             if (!res.ok) throw new Error('Failed to fetch data');
 
             const data: ApiPlayerResponse[] = await res.json();
-            
+
             const mappedData: LeaderboardPlayer[] = data.map((p) => ({
                 username: p.username,
                 score: p.score,
@@ -62,7 +66,7 @@ export default function LeaderboardPage() {
     // --- Component: Player Row ---
     const PlayerRow = ({ player, index }: { player: LeaderboardPlayer, index: number }) => {
         const rank = index + 1;
-        
+
         // 🎨 Design Logic (ปรับปรุงใหม่)
         // - เพิ่ม group เพื่อใช้กับ hover effect ด้านใน
         // - เพิ่ม duration-300 เพื่อความนุ่มนวล
@@ -73,7 +77,7 @@ export default function LeaderboardPage() {
         let textClass = "text-gray-300 font-medium transition-colors group-hover:text-white";
         let scoreClass = "text-gray-400 font-mono text-sm transition-colors group-hover:text-gray-200";
 
-        if (rank === 1) { 
+        if (rank === 1) {
             containerClass += " bg-gradient-to-r from-yellow-500/20 via-yellow-500/10 to-transparent border-yellow-500/40 shadow-[inset_0_0_20px_rgba(234,179,8,0.15)] hover:shadow-[inset_0_0_25px_rgba(234,179,8,0.25)] hover:border-yellow-500/60";
             rankBadge = <span className="text-xl w-6 text-center drop-shadow-[0_2px_3px_rgba(0,0,0,0.3)] scale-110 animate-pulse-slow">🥇</span>;
             textClass = "text-yellow-100 font-bold drop-shadow-sm";
@@ -102,10 +106,10 @@ export default function LeaderboardPage() {
             <div className={containerClass}>
                 {/* ✨ เอฟเฟกต์แสงวิ่ง (Shine Effect) เมื่อ Hover */}
                 <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-[100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out pointer-events-none"></div>
-                
+
                 <div className="flex items-center gap-3 md:gap-4 overflow-hidden relative z-10">
                     <div className="flex-shrink-0 flex justify-center w-6 md:w-8">{rankBadge}</div>
-                    
+
                     <div className="flex flex-col min-w-0">
                         <div className={`text-sm truncate max-w-[120px] md:max-w-[180px] flex items-center gap-2 ${textClass}`}>
                             {player.username}
@@ -124,9 +128,9 @@ export default function LeaderboardPage() {
 
     return (
         <main className="relative w-full h-[100dvh] flex flex-col items-center justify-center bg-slate-900 font-sans overflow-hidden">
-            
+
             {/* ==================== ✨ Background ✨ ==================== */}
-            <div className="absolute inset-0 z-0 overflow-hidden bg-slate-950"> 
+            <div className="absolute inset-0 z-0 overflow-hidden bg-slate-950">
                 <div className="absolute inset-0 z-0 w-[200%] h-full animate-scroll-bg opacity-40">
                     <div className="w-1/2 h-full bg-cover bg-center grayscale-[50%]" style={{ backgroundImage: "url('/images/bg1.png')" }}></div>
                     <div className="w-1/2 h-full bg-cover bg-center grayscale-[50%]" style={{ backgroundImage: "url('/images/bg1.png')" }}></div>
@@ -144,13 +148,13 @@ export default function LeaderboardPage() {
                 - เพิ่ม ring-1 ring-white/5 ring-inset เพื่อสร้างขอบเรืองแสงด้านใน
             */}
             <div className="relative z-20 w-full h-full md:h-[90vh] max-w-md bg-slate-900/60 backdrop-blur-2xl md:border border-white/10 md:rounded-[2.5rem] shadow-[0_0_80px_rgba(0,0,0,0.6)] flex flex-col overflow-hidden animate-fade-in-up ring-1 ring-white/5 ring-inset">
-                
+
                 {/* Header & Tabs */}
                 <div className="shrink-0 pt-6 pb-4 px-6 text-center z-20 relative">
-                    
+
                     {/* ปุ่ม Back */}
-                    <button 
-                        onClick={() => { playSound('click'); router.push('/'); }} 
+                    <button
+                        onClick={() => { playSound('click'); router.push('/'); }}
                         className="absolute top-6 left-5 w-9 h-9 rounded-full bg-white/5 border border-white/10 hover:bg-white/20 text-gray-400 hover:text-white flex items-center justify-center transition-all active:scale-95 z-50 backdrop-blur-md shadow-lg hover:shadow-white/10"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
@@ -163,9 +167,9 @@ export default function LeaderboardPage() {
                         <span className="text-3xl drop-shadow-[0_0_15px_rgba(234,179,8,0.5)]">🏆</span>
                         <h1 className="text-2xl font-black text-white uppercase tracking-widest drop-shadow-md">ทำเนียบยอดฝีมือ</h1>
                     </div>
-                    
+
                     <div className="flex bg-black/20 p-1.5 rounded-2xl border border-white/10 relative shadow-inner">
-                        <button 
+                        <button
                             onClick={() => { playSound('click'); setActiveTab('quiz_hard'); }}
                             className={`flex-1 py-2.5 rounded-xl font-bold text-xs md:text-sm tracking-wide transition-all duration-300 relative z-10 flex items-center justify-center gap-2 ${activeTab === 'quiz_hard' ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
                         >
@@ -176,7 +180,7 @@ export default function LeaderboardPage() {
                             <span className="drop-shadow-sm">🧠 แบบทดสอบ (ยาก)</span>
                         </button>
 
-                        <button 
+                        <button
                             onClick={() => { playSound('click'); setActiveTab('virus'); }}
                             className={`flex-1 py-2.5 rounded-xl font-bold text-xs md:text-sm tracking-wide transition-all duration-300 relative z-10 flex items-center justify-center gap-2 ${activeTab === 'virus' ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
                         >
@@ -189,7 +193,7 @@ export default function LeaderboardPage() {
                 </div>
 
                 {/* Scrollable List */}
-                <div className="flex-1 overflow-y-auto px-4 pb-28 custom-scrollbar" style={{ scrollbarGutter: 'stable' }}> 
+                <div className="flex-1 overflow-y-auto px-4 pb-28 custom-scrollbar" style={{ scrollbarGutter: 'stable' }}>
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center h-40 gap-4 opacity-60 animate-pulse">
                             <div className="w-10 h-10 border-3 border-white/20 border-t-cyan-400 rounded-full animate-spin shadow-[0_0_15px_rgba(6,182,212,0.3)]"></div>
@@ -214,7 +218,7 @@ export default function LeaderboardPage() {
                     <div className="absolute bottom-6 left-0 right-0 z-30 px-4 animate-slide-up">
                         {/* เพิ่มเงาและขอบให้ดูพรีเมียมขึ้น */}
                         <div className="relative overflow-hidden rounded-2xl border border-cyan-500/50 bg-[#0f172a]/95 backdrop-blur-2xl shadow-[0_0_30px_rgba(6,182,212,0.25)] py-2.5 px-4 flex items-center justify-between group ring-1 ring-cyan-400/20 ring-inset transition-all hover:shadow-[0_0_40px_rgba(6,182,212,0.35)] hover:border-cyan-400/70">
-                            
+
                             <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-blue-600/5 to-cyan-500/10 animate-pulse-slow"></div>
                             <div className="absolute -left-10 top-0 bottom-0 w-2 bg-cyan-400 blur-xl opacity-50"></div>
 

@@ -32,8 +32,8 @@ export default function HomePage() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isMobileMenuExpanded, setIsMobileMenuExpanded] = useState(false);
 
-  // Ban Popup State
-  const [banDetails, setBanDetails] = useState<{ isBanned: boolean; reason: string; expiry: string } | null>(null);
+  // Ban Popup State Removed
+  // const [banDetails, setBanDetails] = useState<{ isBanned: boolean; reason: string; expiry: string } | null>(null);
 
   // Logic Click Outside สำหรับ Profile Menu
   useEffect(() => {
@@ -65,36 +65,7 @@ export default function HomePage() {
 
         if (storedUser) {
           setUser(storedUser);
-
-          // 🔥 เพิ่ม: ตรวจสอบสถานะการแบนจาก Server
-          const userId = storedUser.uid || storedUser.id;
-          if (userId) {
-            // 🌍 Automatic Environment Switching
-            // Local -> localhost:4000
-            // Production (Vercel) -> https://sati-game-pj-backend.vercel.app
-            const isProduction = process.env.NODE_ENV === 'production';
-            const apiUrl = isProduction
-              ? 'https://sati-game-pj-backend.vercel.app' // ⚠️ REPLACE WITH YOUR REAL BACKEND URL
-              : 'http://localhost:4000';
-
-            console.log("Debug: Fetching user status from:", `${apiUrl}/user/status/${userId}`); // 🔍 Debug Log
-            try {
-              const res = await fetch(`${apiUrl}/user/status/${userId}`);
-              if (res.ok) {
-                const data = await res.json();
-                if (data.is_banned) {
-                  const dateStr = data.ban_expires_at ? new Date(data.ban_expires_at).toLocaleDateString('th-TH') : 'ไม่มีกำหนด';
-                  setBanDetails({
-                    isBanned: true,
-                    reason: data.ban_reason || 'ละเมิดกฎการใช้งาน',
-                    expiry: dateStr
-                  });
-                }
-              }
-            } catch (err) {
-              console.error("Failed to check ban status in background:", err);
-            }
-          }
+          // Ban Check Removed
         }
 
         setIsLoaded(true);
@@ -112,7 +83,7 @@ export default function HomePage() {
     // if (confirm('คุณต้องการออกจากระบบใช่หรือไม่?')) { // ถ้ากดจาก Popup ไม่ต้องถาม
     localStorage.removeItem('user');
     setUser(null);
-    setBanDetails(null); // Clear ban details
+    // setBanDetails(null); // Clear ban details
     router.push('/login');
     // }
   };
@@ -125,7 +96,7 @@ export default function HomePage() {
 
 
   const handleStart = (mode: string) => {
-    if (banDetails?.isBanned) return; // Prevent play if banned (UI Check)
+    // if (banDetails?.isBanned) return; // Prevent play if banned (UI Check)
     playSound('click');
     if (!user) {
       router.push('/login');
@@ -149,33 +120,7 @@ export default function HomePage() {
   return (
     <main className="relative w-screen h-screen flex flex-col items-center justify-center p-4 overflow-hidden bg-slate-900 font-sans">
 
-      {/* 🔴 BAN POPUP MODAL */}
-      {banDetails && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-          <div className="bg-slate-900 border border-red-500/50 rounded-2xl p-6 md:p-8 max-w-sm w-full text-center shadow-[0_0_50px_rgba(239,68,68,0.4)] relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-red-500 to-transparent"></div>
-            <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/30">
-              <span className="text-4xl animate-bounce">🚫</span>
-            </div>
-            <h2 className="text-2xl font-black text-white uppercase tracking-wider mb-2">บัญชีถูกระงับ</h2>
-
-            <div className="bg-red-950/30 border border-red-500/20 rounded-xl p-4 mb-6">
-              <p className="text-red-200 text-sm font-bold mb-1">สาเหตุ:</p>
-              <p className="text-gray-300 text-sm mb-3">{banDetails.reason}</p>
-              <div className="w-full h-px bg-red-500/20 mb-3"></div>
-              <p className="text-red-200 text-sm font-bold mb-1">ปลดแบนวันที่:</p>
-              <p className="text-gray-300 text-sm">{banDetails.expiry}</p>
-            </div>
-
-            <button
-              onClick={handleLogout}
-              className="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95"
-            >
-              รับทราบ / ออกจากระบบ
-            </button>
-          </div>
-        </div>
-      )}
+      {/* 🔴 BAN POPUP MODAL REMOVED */}
 
       {/* ==================== ✨ พื้นหลัง ✨ ==================== */}
       <div className="absolute inset-0 z-0 overflow-hidden bg-slate-950">
