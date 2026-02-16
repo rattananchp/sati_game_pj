@@ -17,7 +17,7 @@ import { ViewState, DashboardData, QuestionStats, QuestionDetail } from '@/compo
 
 export default function AdminDashboard() {
     const router = useRouter();
-    const API_URL = 'http://localhost:4000';
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
     // --- State ---
     const [currentView, setCurrentView] = useState<ViewState>('dashboard');
