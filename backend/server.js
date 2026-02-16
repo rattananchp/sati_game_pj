@@ -16,7 +16,12 @@ const port = 4000;
 
 // CORS Config
 app.use(cors({
-  origin: ["http://localhost:3000"], // 🔒 Allow only Frontend
+  origin: [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://sati-game-pj-frontend.vercel.app", // 🌍 Example Vercel Frontend
+    /\.vercel\.app$/ // 🔓 Allow all Vercel Subdomains (Preview Deployments)
+  ],
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true // Allow cookies if needed
