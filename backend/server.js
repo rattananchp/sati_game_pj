@@ -16,9 +16,10 @@ const port = 4000;
 
 // CORS Config
 app.use(cors({
-  origin: "*",
+  origin: ["http://localhost:3000"], // 🔒 Allow only Frontend
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true // Allow cookies if needed
 }));
 
 // Security Headers (CSP) via Helmet
@@ -30,6 +31,7 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "blob:"],
       connectSrc: ["'self'", "http://localhost:3000", "http://localhost:4000"], // Allow frontend & backend
+      frameAncestors: ["'self'"], // 🔒 Prevent ClickJacking
     },
   },
 }));
