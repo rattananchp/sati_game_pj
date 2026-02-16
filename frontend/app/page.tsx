@@ -69,8 +69,13 @@ export default function HomePage() {
           // 🔥 เพิ่ม: ตรวจสอบสถานะการแบนจาก Server
           const userId = storedUser.uid || storedUser.id;
           if (userId) {
-            // 🌍 PRODUCTION READY: Use environment variable
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            // 🌍 Automatic Environment Switching
+            // Local -> localhost:4000
+            // Production (Vercel) -> https://sati-game-pj-backend.vercel.app
+            const isProduction = process.env.NODE_ENV === 'production';
+            const apiUrl = isProduction
+              ? 'https://sati-game-pj-backend.vercel.app' // ⚠️ REPLACE WITH YOUR REAL BACKEND URL
+              : 'http://localhost:4000';
 
             console.log("Debug: Fetching user status from:", `${apiUrl}/user/status/${userId}`); // 🔍 Debug Log
             try {
