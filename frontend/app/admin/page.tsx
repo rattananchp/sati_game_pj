@@ -17,7 +17,11 @@ import { ViewState, DashboardData, QuestionStats, QuestionDetail } from '@/compo
 
 export default function AdminDashboard() {
     const router = useRouter();
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    // ✅ Auto-detect Environment
+    let API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+        API_URL = 'http://localhost:4000';
+    }
 
     // --- State ---
     const [currentView, setCurrentView] = useState<ViewState>('dashboard');

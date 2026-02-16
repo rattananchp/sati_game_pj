@@ -15,9 +15,14 @@ export default function LoginPage() {
     setIsLoading(true);
     setError('');
 
-    // ✅ 1. ใช้ URL Server
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-    // const apiUrl = 'http://localhost:4000';
+    // ✅ 1. Auto-detect Environment
+    // ถ้าเปิดผ่าน localhost ให้ชี้ไปที่ port 4000
+    // ถ้าไม่ใช่ (อยู่บน Vercel/Server จริง) ให้ใช้ค่าจาก Environment Variable
+    let apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+
+    if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+      apiUrl = 'http://localhost:4000';
+    }
     console.log("🌐 Connecting to API:", apiUrl);
 
     try {

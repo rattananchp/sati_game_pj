@@ -103,7 +103,12 @@ function QuizContent() {
                 const userObj = JSON.parse(userStr); // Parse directly to ensure availability
                 const userId = userObj.uid || userObj.id;
 
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+                // ✅ Auto-detect Environment
+                let apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+                if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+                    apiUrl = 'http://localhost:4000';
+                }
+
                 const res = await fetch(`${apiUrl}/questions?level=${diff}`);
 
                 if (!res.ok) throw new Error("Failed to fetch");
@@ -201,7 +206,11 @@ function QuizContent() {
                 const totalTimeTaken = Math.floor((Date.now() - startTimeRef.current) / 1000);
 
                 // const apiUrl = 'http://localhost:4000';
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+                // ✅ Auto-detect Environment
+                let apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+                if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+                    apiUrl = 'http://localhost:4000';
+                }
                 const userIdToSend = currentUser.uid || currentUser.id;
 
                 if (!userIdToSend) return;

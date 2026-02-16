@@ -89,11 +89,38 @@ export default function (prisma) {
     });
 
     // ==========================================
-    // 3. Check Ban Status (Dummy for now)
+    // 3. Check Ban Status (Real DB Check)
     // ==========================================
     router.get('/status/:id', async (req, res) => {
-        // Return not banned by default to satisfy frontend check
-        res.json({ is_banned: false });
+        try {
+            const userId = parseInt(req.params.id);
+
+            if (isNaN(userId)) {
+                return res.status(400).json({ error: "Invalid User ID" });
+            }
+
+            const user = await prisma.user.findUnique({
+                where: { uid: userId },
+                select: {
+                    uid: true,
+                    username: true,
+                    role: true,
+                    is_banned: true,
+                    ban_reason: true,
+                    ban_expires_at: true
+                }
+            });
+
+            if (!user) {
+                return res.status(404).json({ error: "User not found" });
+            }
+
+            res.json(user);
+
+        } catch (err) {
+            console.error("Fetch User Status Error:", err);
+            res.status(500).json({ error: "Internal Server Error" });
+        }
     });
 
     return router;

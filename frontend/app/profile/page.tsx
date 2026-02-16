@@ -53,7 +53,12 @@ export default function ProfilePage() {
     // Fetch Stats
     const fetchGameStats = async (userId: number) => {
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            // ✅ Auto-detect Environment
+            let apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+                apiUrl = 'http://localhost:4000';
+            }
+
             // apiUrl = 'http://localhost:4000';
             const res = await fetch(`${apiUrl}/scores/stats?userId=${userId}`);
 
@@ -101,7 +106,11 @@ export default function ProfilePage() {
 
         setIsLoading(true);
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            // ✅ Auto-detect Environment
+            let apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+                apiUrl = 'http://localhost:4000';
+            }
 
             // 1. ส่งข้อมูลไปอัปเดตที่ Backend
             const res = await fetch(`${apiUrl}/user/update-profile`, {
@@ -152,7 +161,11 @@ export default function ProfilePage() {
         setIsLoading(true);
 
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            // ✅ Auto-detect Environment
+            let apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+                apiUrl = 'http://localhost:4000';
+            }
             //const apiUrl = 'http://localhost:4000';
 
             const res = await fetch(`${apiUrl}/user/change-password`, {
