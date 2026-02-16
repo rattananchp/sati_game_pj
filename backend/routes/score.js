@@ -100,7 +100,8 @@ export default function (prisma) {
                         await prisma.gameScore.update({
                             where: { gs_id: existingScore.gs_id },
                             data: {
-                                played_at: new Date()
+                                played_at: new Date(),
+                                play_count: { increment: 1 } // ✅ อัปเดต play_count แม้คะแนนจะไม่เพิ่ม
                             }
                         });
                         console.log(`ℹ️ [Virus] Score ${newScore} is not higher than ${existingScore.score}. Updated Play Count: ${existingScore.play_count + 1}`);
@@ -208,11 +209,11 @@ export default function (prisma) {
                 where: { uid: uid }
             });
 
-            // 2. Virus Count (✅ นับว่ามีบันทึกคะแนนหรือไม่ - เพราะไม่มี Play Count Field)
+            // 2. Virus Count (✅ นับจาก play_count ใน GameScore)
             const virusRecord = await prisma.gameScore.findFirst({
                 where: { uid: uid, game_type: 'virus' }
             });
-            const virusCount = virusRecord ? 1 : 0; // ถ้ามี record = เล่นแล้ว (อย่างน้อย 1 ครั้ง)
+            const virusCount = virusRecord ? virusRecord.play_count : 0; // ✅ ใช้ค่าจริงจาก DB
 
             // 3. Chat Count (ถ้ามี)
             const chatRecord = await prisma.gameScore.findFirst({

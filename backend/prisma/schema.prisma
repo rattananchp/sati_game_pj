@@ -47,7 +47,7 @@ model GameScore {
   difficulty String?  // ระดับความยาก เช่น 'hard' (ถ้าเป็น virus อาจจะเป็น null)
   played_at  DateTime @default(now())
   time_taken Int @default(0)
-  // play_count Int @default(1)
+  play_count Int @default(1)
   uid        Int
   user       User     @relation(fields: [uid], references: [uid], onDelete: Cascade)
   

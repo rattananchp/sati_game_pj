@@ -86,6 +86,9 @@ function QuizContent() {
     const [isBonus, setIsBonus] = useState(false);
     const [isTimeOut, setIsTimeOut] = useState(false);
 
+    // --- Refs ---
+    const startTimeRef = useRef<number>(0);
+
     // --- Init ---
     useEffect(() => {
         const userStr = localStorage.getItem('user');
@@ -117,6 +120,10 @@ function QuizContent() {
                     });
                     setQuestions(shuffledQuestions);
                     setGameState('playing');
+
+                    // ✅ เริ่มจับเวลาทั้งเกม
+                    startTimeRef.current = Date.now();
+
                     setTimeout(() => setIsTimerRunning(true), 0);
                     playSound('click');
                 } else {
@@ -190,6 +197,9 @@ function QuizContent() {
         // ✅ 4. ใช้โค้ดชุดนี้แทนอันเดิม (เพื่อส่ง logs ไปด้วย)
         if (currentUser) {
             try {
+                // คำนวณเวลาที่เล่นไปทั้งหมด (วินาที)
+                const totalTimeTaken = Math.floor((Date.now() - startTimeRef.current) / 1000);
+
                 // const apiUrl = 'http://localhost:4000';
                 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
                 const userIdToSend = currentUser.uid || currentUser.id;
@@ -205,7 +215,7 @@ function QuizContent() {
                         score: score,
                         gameType: 'quiz',
                         difficulty: diff,
-                        timeTaken: config.time - timeLeft, // หรือคำนวณเวลารวมเอาตามสะดวก
+                        timeTaken: totalTimeTaken, // ✅ ส่งเวลารวมทั้งหมดไป
                         logs: answerLogs // ⭐ สำคัญมาก! ส่งประวัติการตอบไปด้วย
                     })
                 });

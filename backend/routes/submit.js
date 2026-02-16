@@ -78,29 +78,39 @@ export default function (prisma) {
                     });
                 }
                 else {
-                    // Virus: เก็บ High Score (และเวลาของรอบนั้น)
+                    // Virus: เก็บ High Score (และเวลาของรอบนั้น) + นับรอบ
                     if (finalScore > existingScore.score) {
                         await prisma.gameScore.update({
                             where: { gs_id: existingScore.gs_id },
                             data: {
                                 score: finalScore,
                                 time_taken: duration, // ✅ อัปเดตเวลาด้วย
-                                played_at: new Date()
+                                played_at: new Date(),
+                                play_count: { increment: 1 } // ✅ บวกรอบ
                             }
                         });
                         console.log(`🏆 New Highscore: ${finalScore} (Time: ${duration}s)`);
                     } else if (finalScore === existingScore.score) {
                         // ถ้าคะแนนเท่ากัน แต่ทำเวลาได้ดีกว่า (น้อยกว่า) ให้เอาอันใหม่
-                        if (duration < existingScore.time_taken) {
-                            await prisma.gameScore.update({
-                                where: { gs_id: existingScore.gs_id },
-                                data: {
-                                    time_taken: duration, // ✅ อัปเดตเวลาที่ดีกว่า
-                                    played_at: new Date()
-                                }
-                            });
-                            console.log(`⚡ Faster Time: ${duration}s (Score tied)`);
-                        }
+                        await prisma.gameScore.update({
+                            where: { gs_id: existingScore.gs_id },
+                            data: {
+                                time_taken: (duration < existingScore.time_taken) ? duration : existingScore.time_taken,
+                                played_at: new Date(),
+                                play_count: { increment: 1 } // ✅ บวกรอบ
+                            }
+                        });
+                        console.log(`⚡ Score tied. Updated play stats.`);
+                    } else {
+                        // คะแนนน้อยกว่าเดิม -> แค่อัปเดตว่าเล่นแล้ว + บวกรอบ
+                        await prisma.gameScore.update({
+                            where: { gs_id: existingScore.gs_id },
+                            data: {
+                                played_at: new Date(),
+                                play_count: { increment: 1 } // ✅ บวกรอบ
+                            }
+                        });
+                        console.log(`ℹ️ Score not higher. Updated play count.`);
                     }
                 }
 
@@ -112,7 +122,8 @@ export default function (prisma) {
                         score: finalScore,
                         time_taken: duration, // ✅ บันทึกเวลาเริ่มต้น
                         game_type: gameType,
-                        difficulty: diffValue
+                        difficulty: diffValue,
+                        play_count: 1 // ✅ เริ่มต้นที่ 1
                     }
                 });
             }
