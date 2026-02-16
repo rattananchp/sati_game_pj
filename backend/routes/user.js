@@ -104,10 +104,7 @@ export default function (prisma) {
                 select: {
                     uid: true,
                     username: true,
-                    role: true,
-                    is_banned: true,
-                    ban_reason: true,
-                    ban_expires_at: true
+                    role: true
                 }
             });
 

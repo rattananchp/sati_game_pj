@@ -8,7 +8,13 @@ export default function (prisma) {
         try {
             const totalUsers = await prisma.user.count({ where: { role: 'user' } });
             const totalGames = await prisma.game.count(); // ✅ นับจากตารางประวัติการเล่น (Game) แทน Leaderboard
-            const totalVirusGames = await prisma.gameScore.count({ where: { game_type: 'virus' } });
+
+            // ✅ แก้ไข: นับยอดรวมการเล่น Virus จาก play_count ของทุกคนรวมกัน
+            const virusAgg = await prisma.gameScore.aggregate({
+                _sum: { play_count: true },
+                where: { game_type: 'virus' }
+            });
+            const totalVirusGames = virusAgg._sum.play_count || 0;
 
             res.json({
                 overview: {

@@ -11,62 +11,6 @@ const GRID_COLS = 'grid-cols-4';
 
 export default function VirusPage() {
     const router = useRouter();
-    const [isLoadingBan, setIsLoadingBan] = useState(true); // ✅ New Blocking State
-
-    // ✅ Check Ban Status on Mount
-    useEffect(() => {
-        const checkBan = async () => {
-            const userStr = localStorage.getItem('user');
-            if (!userStr) { router.push('/login'); return; }
-
-            const user = JSON.parse(userStr);
-            const userId = user.uid || user.id;
-
-            if (!userId) {
-                console.error("No User ID found");
-                router.push('/login');
-                return;
-            }
-
-            // Safety Timeout
-            const timeoutId = setTimeout(() => {
-                setIsLoadingBan(false);
-            }, 5000);
-
-            try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-                const res = await fetch(`${apiUrl}/user/status/${userId}`);
-
-                // ✅ Safe JSON Parsing
-                if (!res.ok) {
-                    console.error("Ban check failed:", res.status);
-                    setIsLoadingBan(false); // Fail-open
-                    clearTimeout(timeoutId);
-                    return;
-                }
-
-                const contentType = res.headers.get("content-type");
-                if (contentType && contentType.includes("application/json")) {
-                    const data = await res.json();
-                    if (data.is_banned) {
-                        alert(`บัญชีของคุณถูกระงับการใช้งาน\nเหตุผล: ${data.ban_reason}`);
-                        router.push('/login');
-                    } else {
-                        setIsLoadingBan(false);
-                    }
-                } else {
-                    console.warn("Ban check returned non-JSON.");
-                    setIsLoadingBan(false); // Fallback
-                }
-                clearTimeout(timeoutId);
-            } catch (e) {
-                console.error("Check ban error:", e);
-                setIsLoadingBan(false); // Fallback
-                clearTimeout(timeoutId);
-            }
-        };
-        checkBan();
-    }, [router]);
 
     // --- State ---
     const [view, setView] = useState<GameState>('tutorial');
@@ -112,7 +56,11 @@ export default function VirusPage() {
         if (!userIdToSend) return;
 
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            // ✅ Auto-detect Environment
+            let apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+                apiUrl = 'http://localhost:4000';
+            }
 
             await fetch(`${apiUrl}/submit-score`, {
                 method: 'POST',
