@@ -10,7 +10,7 @@
         },
         {
           "key": "Access-Control-Allow-Origin",
-          "value": "*"
+          "value": "https://sati-game-pj.vercel.app"
         },
         {
           "key": "Access-Control-Allow-Methods",

@@ -1,17 +1,13 @@
-// backend/routes/auth.js
 import express from 'express';
 import bcrypt from 'bcrypt';
 
 export default function (prisma) {
     const router = express.Router();
-    console.log("🔥 Auth Route Loaded! (Ready)");
 
-    // 1. Register (สมัครสมาชิก)
     router.post('/register', async (req, res) => {
         const { username, password, email, phone, birthdate, address } = req.body;
 
         try {
-            // เช็คข้อมูลซ้ำ
             const existingUser = await prisma.user.findFirst({
                 where: {
                     OR: [
@@ -28,10 +24,8 @@ export default function (prisma) {
                 if (existingUser.phone === phone) return res.status(400).json({ error: "เบอร์โทรศัพท์นี้ถูกใช้งานแล้ว!" });
             }
 
-            // เข้ารหัสรหัสผ่าน
             const hashedPassword = await bcrypt.hash(password, 10);
 
-            // บันทึกข้อมูล
             const newUser = await prisma.user.create({
                 data: {
                     username,
@@ -43,7 +37,6 @@ export default function (prisma) {
                 }
             });
 
-            // ✅ ถูกต้อง: ส่ง uid กลับไป
             res.json({
                 message: "สมัครสมาชิกเรียบร้อย!",
                 user: {
@@ -59,7 +52,6 @@ export default function (prisma) {
         }
     });
 
-    // 2. Login (เข้าสู่ระบบ)
     router.post('/login', async (req, res) => {
         const { username, password } = req.body;
 
@@ -68,24 +60,20 @@ export default function (prisma) {
                 where: { username: username }
             });
 
-
             if (!user) {
                 return res.status(401).json({ error: "ไม่พบชื่อผู้ใช้นี้" });
             }
 
             const match = await bcrypt.compare(password, user.password);
             if (match) {
-                // ✅ ถูกต้อง: ส่ง uid กลับไปให้ Frontend เก็บ
-
                 res.json({
                     success: true,
                     user: {
-                        uid: user.uid, // 👈 จุดสำคัญคือตรงนี้ (ต้องเป็น uid)
+                        uid: user.uid,
                         username: user.username,
                         email: user.email,
                         phone: user.phone,
                         role: user.role
-
                     }
                 });
             } else {
@@ -98,7 +86,6 @@ export default function (prisma) {
         }
     });
 
-    // 3. Reset Password (เปลี่ยนรหัสผ่าน)
     router.post('/reset-password', async (req, res) => {
         const { username, phone, newPassword } = req.body;
 
@@ -117,14 +104,14 @@ export default function (prisma) {
             const hashedPassword = await bcrypt.hash(newPassword, 10);
 
             await prisma.user.update({
-                where: { uid: user.uid }, // ✅ ถูกต้อง: ใช้ uid ในการอ้างอิง
+                where: { uid: user.uid },
                 data: { password: hashedPassword }
             });
 
             res.json({ success: true, message: "เปลี่ยนรหัสผ่านสำเร็จ!" });
 
         } catch (err) {
-            console.error("Reset Password Error:", err);
+            console.error(err);
             res.status(500).json({ error: "เปลี่ยนรหัสผ่านไม่สำเร็จ" });
         }
     });
