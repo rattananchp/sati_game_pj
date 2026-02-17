@@ -49,21 +49,7 @@ export default function (prisma) {
                 return res.status(404).json({ error: "ไม่พบผู้ใช้งาน" });
             }
 
-            // 👇👇👇 เริ่มส่วน DEBUG (ดูค่าจริงใน Terminal) 👇👇👇
-            console.log("---------------- DEBUG CHANGE PASSWORD ----------------");
-            console.log("User ID:", userId);
-            console.log("User Name:", user.username);
-            console.log("Input Password (ที่คุณกรอก):", `"${currentPassword}"`);
-            console.log("DB Password (ในฐานข้อมูล):", `"${user.password}"`);
-
-            // เช็คว่ารหัสใน DB เป็น Hash หรือไม่ (ถ้าสั้นๆ แปลว่าเป็น text ธรรมดา)
-            const isHash = user.password.startsWith('$2b$') || user.password.length > 50;
-            console.log("Is DB Password Hashed?:", isHash);
-
             const isMatch = await bcrypt.compare(currentPassword, user.password);
-            console.log("Result (isMatch):", isMatch);
-            console.log("-------------------------------------------------------");
-            // 👆👆👆 จบส่วน DEBUG 👆👆👆
 
             // 2. เช็ครหัสเดิม
             if (!isMatch) {

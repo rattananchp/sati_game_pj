@@ -14,38 +14,48 @@ const app = express();
 const prisma = new PrismaClient();
 const port = 4000;
 
-// CORS Config
+// CORS Config (🔒 ระบุ domain ชัดเจน ไม่ใช้ wildcard regex)
 app.use(cors({
   origin: [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "https://sati-game-pj-frontend.vercel.app", // 🌍 Example Vercel Frontend
-    /\.vercel\.app$/ // 🔓 Allow all Vercel Subdomains (Preview Deployments)
+    "https://sati-game-pj-frontend.vercel.app"
   ],
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true // Allow cookies if needed
+  credentials: true
 }));
 
-// Security Headers (CSP) via Helmet
+// Security Headers via Helmet
 app.use(helmet({
+  // 🔒 CSP: กำหนด directive ให้ครบทุกตัว (แก้ ZAP: No Fallback, Wildcard)
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // Needed for development
-      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],                      // ✅ ลบ unsafe-inline/unsafe-eval (Backend เป็น API ไม่จำเป็น)
+      styleSrc: ["'self'"],                        // ✅ ลบ unsafe-inline
       imgSrc: ["'self'", "data:", "blob:"],
-      connectSrc: ["'self'", "http://localhost:3000", "http://localhost:4000"], // Allow frontend & backend
-      frameAncestors: ["'self'"], // 🔒 Prevent ClickJacking
+      fontSrc: ["'self'"],                         // ✅ เพิ่ม (แก้ No Fallback)
+      objectSrc: ["'none'"],                       // ✅ เพิ่ม (ป้องกัน Flash/Plugin)
+      baseUri: ["'self'"],                         // ✅ เพิ่ม (ป้องกัน base tag injection)
+      formAction: ["'self'"],                      // ✅ เพิ่ม (ป้องกัน form redirect)
+      connectSrc: ["'self'", "http://localhost:3000", "http://localhost:4000"],
+      frameAncestors: ["'self'"],
     },
+  },
+  // 🔒 HSTS: บังคับ HTTPS (แก้ ZAP: Strict-Transport-Security Not Set)
+  strictTransportSecurity: {
+    maxAge: 31536000,       // 1 ปี
+    includeSubDomains: true,
   },
 }));
 
 app.use(express.json());
 
-// ✅ Debug Middleware: Log all requests
+// 🔒 Cache-Control: ป้องกัน browser cache ข้อมูล sensitive (แก้ ZAP: Cache-control)
 app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.setHeader('Pragma', 'no-cache');
   next();
 });
 

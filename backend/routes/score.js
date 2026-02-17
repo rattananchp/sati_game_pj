@@ -21,10 +21,6 @@ export default function (prisma) {
         console.log(`📥 Processing Score: User ${uid} | ${gameType} | +${newScore}`);
 
         try {
-            // ✅ Ban Check Removed (System Disabled)
-            // const user = await prisma.user.findUnique({ where: { uid: uid } });
-            // if (user && user.is_banned) ...
-
             // ==================================================
             // 1. เก็บประวัติการเล่น (History) - เก็บทุกรอบที่เล่น เพื่อดู Graph ใน Admin
             // ==================================================

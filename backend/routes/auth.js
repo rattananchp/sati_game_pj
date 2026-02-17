@@ -67,7 +67,7 @@ export default function (prisma) {
             const user = await prisma.user.findUnique({
                 where: { username: username }
             });
-            console.log("🔥 DATA FROM DB:", user);
+
 
             if (!user) {
                 return res.status(401).json({ error: "ไม่พบชื่อผู้ใช้นี้" });
@@ -76,7 +76,7 @@ export default function (prisma) {
             const match = await bcrypt.compare(password, user.password);
             if (match) {
                 // ✅ ถูกต้อง: ส่ง uid กลับไปให้ Frontend เก็บ
-                console.log("✅ LOGIN DEBUG: Found User ID =", user.uid);
+
                 res.json({
                     success: true,
                     user: {

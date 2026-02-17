@@ -21,10 +21,30 @@ export default function (prisma) {
         console.log(`📥 Receiving: User ${uid} | ${gameType} | ${finalScore} pts | ${duration}s`);
 
         // 🛡️ Anti-Cheat: ป้องกันการกดจบเกมไวเกินไป (Auto-Clicker)
-        // ถ้าเล่นจบเร็วกว่า 5 วินาที -> ไม่บันทึก
+        // ถ้าเล่นจบเร็วกว่า 5 วินาที -> ไม่บันทึกคะแนน แต่ยังนับรอบ
         if (duration < 5) {
-            console.warn(`⚠️ [Anti-Cheat] Suspicious activity detected! User ${uid} finished in ${duration}s. Score ignored.`);
-            return res.json({ success: true, message: "Score ignored due to suspicious activity." });
+            console.warn(`⚠️ [Anti-Cheat] Suspicious activity detected! User ${uid} finished in ${duration}s. Score ignored but play counted.`);
+
+            // ✅ ยังคงนับรอบการเล่น แม้คะแนนจะไม่ถูกบันทึก
+            try {
+                const existing = await prisma.gameScore.findFirst({
+                    where: { uid, game_type: gameType, difficulty: diffValue }
+                });
+                if (existing) {
+                    await prisma.gameScore.update({
+                        where: { gs_id: existing.gs_id },
+                        data: { play_count: { increment: 1 }, played_at: new Date() }
+                    });
+                } else {
+                    await prisma.gameScore.create({
+                        data: { uid, score: 0, game_type: gameType, difficulty: diffValue, play_count: 1 }
+                    });
+                }
+            } catch (countErr) {
+                console.error(`❌ [Anti-Cheat] Failed to count play:`, countErr);
+            }
+
+            return res.json({ success: true, message: "Play counted but score ignored." });
         }
 
         try {

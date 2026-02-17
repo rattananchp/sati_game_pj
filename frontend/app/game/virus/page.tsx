@@ -38,6 +38,7 @@ export default function VirusPage() {
     const loopRef = useRef<NodeJS.Timeout | null>(null);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
     const bossTimerRef = useRef<number>(0);
+    const survivalTimeRef = useRef<number>(0); // ✅ เก็บค่าเวลาล่าสุดเสมอ
 
     // Helper: Format Time
     const formatTime = (seconds: number) => {
@@ -69,7 +70,7 @@ export default function VirusPage() {
                     userId: userIdToSend,
                     score: finalScore,
                     gameType: 'virus',
-                    timeTaken: survivalTime,
+                    timeTaken: survivalTimeRef.current, // ✅ ใช้ Ref ป้องกัน stale closure
                     logs: []
                 })
             });
@@ -161,7 +162,12 @@ export default function VirusPage() {
     useEffect(() => {
         if (view !== 'playing' || isPhase3Warning) return;
 
-        timerRef.current = setInterval(() => setSurvivalTime(t => t + 1), 1000);
+        timerRef.current = setInterval(() => {
+            setSurvivalTime(t => {
+                survivalTimeRef.current = t + 1; // ✅ Sync Ref ทุกวินาที
+                return t + 1;
+            });
+        }, 1000);
         return () => { if (timerRef.current) clearInterval(timerRef.current); };
     }, [view, isPhase3Warning]);
 
@@ -316,6 +322,7 @@ export default function VirusPage() {
         setHp(200);
         setScore(0);
         setSurvivalTime(0);
+        survivalTimeRef.current = 0; // ✅ Reset Ref ด้วย
         setBossHp(0);
         bossTimerRef.current = 0;
         setGrid(Array(GRID_SIZE).fill('empty'));
