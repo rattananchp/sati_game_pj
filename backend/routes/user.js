@@ -28,8 +28,16 @@ export default function (prisma) {
     router.post('/change-password', async (req, res) => {
         const { userId, currentPassword, newPassword } = req.body;
 
-        if (!userId || !currentPassword || !newPassword) {
-            return res.status(400).json({ error: "กรุณากรอกข้อมูลให้ครบถ้วน" });
+        console.log("📩 change-password request:", { userId, hasCurrentPw: !!currentPassword, hasNewPw: !!newPassword });
+
+        if (!userId) {
+            return res.status(400).json({ error: "ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบใหม่" });
+        }
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ error: "กรุณากรอกรหัสผ่านให้ครบถ้วน" });
+        }
+        if (newPassword.length < 4) {
+            return res.status(400).json({ error: "รหัสผ่านใหม่สั้นเกินไป (ต้อง 4 ตัวขึ้นไป)" });
         }
 
         try {
