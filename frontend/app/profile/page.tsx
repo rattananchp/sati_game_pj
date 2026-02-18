@@ -157,8 +157,25 @@ export default function ProfilePage() {
             alert('รหัสผ่านใหม่สั้นเกินไป (ต้อง 4 ตัวขึ้นไป)!');
             return;
         }
+        if (currentPasswordInput === newPassword) {
+            alert('รหัสผ่านใหม่ต้องไม่ซ้ำกับรหัสผ่านเดิม!');
+            return;
+        }
+        // เช็คค่า
+    const payload = {
+        userId: user.uid || user.id, // <--- จุดที่น่าสงสัย
+        currentPassword: currentPasswordInput,
+        newPassword: newPassword
+    };
+    console.log("ข้อมูลที่จะส่งไป Backend:", payload); 
 
-        setIsLoading(true);
+    // ถ้า userId เป็น undefined ให้แจ้งเตือน
+    if (!payload.userId) {
+        alert("Error: ไม่พบ User ID กรุณาล็อกอินใหม่");
+        return;
+    }
+
+    setIsLoading(true);
 
         try {
             // ✅ Auto-detect Environment
@@ -171,11 +188,12 @@ export default function ProfilePage() {
             const res = await fetch(`${apiUrl}/user/change-password`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    userId: user.uid || user.id,
-                    currentPassword: currentPasswordInput,
-                    newPassword: newPassword
-                })
+                // body: JSON.stringify({
+                //     userId: user.uid || user.id,
+                //     currentPassword: currentPasswordInput,
+                //     newPassword: newPassword
+                // })
+                body: JSON.stringify(payload)
             });
 
             const data = await res.json();

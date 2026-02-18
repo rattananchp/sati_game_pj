@@ -47,6 +47,11 @@ export default function (prisma) {
                 return res.status(401).json({ error: "รหัสผ่านปัจจุบันไม่ถูกต้อง" });
             }
 
+            const isSameAsOld = await bcrypt.compare(newPassword, user.password);
+            if (isSameAsOld) {
+                return res.status(400).json({ error: "รหัสผ่านใหม่ต้องไม่ซ้ำกับรหัสผ่านเดิม" });
+            }
+
             const saltRounds = 10;
             const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
 
