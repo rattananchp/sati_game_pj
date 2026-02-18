@@ -118,12 +118,12 @@ export default function HomePage() {
   };
 
   return (
-    <main className="relative w-screen h-screen flex flex-col items-center justify-center p-4 overflow-hidden bg-slate-900 font-sans">
+    <main className="relative w-screen min-h-screen flex flex-col items-center justify-start md:justify-center p-4 pt-20 pb-24 overflow-x-hidden overflow-y-auto bg-slate-900 font-sans">
 
       {/* 🔴 BAN POPUP MODAL REMOVED */}
 
       {/* ==================== ✨ พื้นหลัง ✨ ==================== */}
-      <div className="absolute inset-0 z-0 overflow-hidden bg-slate-950">
+      <div className="fixed inset-0 z-0 overflow-hidden bg-slate-950">
         <div className="absolute inset-0 z-0 w-[200%] h-full animate-scroll-bg opacity-40">
           <div className="w-1/2 h-full bg-cover bg-center grayscale-[50%]" style={{ backgroundImage: "url('/images/bg1.png')" }}></div>
           <div className="w-1/2 h-full bg-cover bg-center grayscale-[50%]" style={{ backgroundImage: "url('/images/bg1.png')" }}></div>
@@ -136,7 +136,7 @@ export default function HomePage() {
       {/* ==================== 🔊 Mute Button (Top Left) ==================== */}
       <button
         onClick={toggleMute}
-        className="absolute top-6 left-6 z-50 p-3 md:p-4 bg-white/10 backdrop-blur-xl rounded-full border border-white/20 shadow-2xl hover:scale-110 hover:bg-white/20 transition-all duration-300 active:scale-95 group"
+        className="fixed top-6 left-6 z-50 p-3 md:p-4 bg-white/10 backdrop-blur-xl rounded-full border border-white/20 shadow-2xl hover:scale-110 hover:bg-white/20 transition-all duration-300 active:scale-95 group"
         title={isMuted ? "เปิดเสียง" : "ปิดเสียง"}
       >
         <span className="text-xl md:text-2xl group-hover:rotate-12 transition-transform block">{isMuted ? '🔇' : '🔊'}</span>
@@ -144,7 +144,7 @@ export default function HomePage() {
 
       {/* ==================== 👤 User Menu Bar (Top Right) ==================== */}
       {isLoaded && (
-        <div className="absolute top-6 right-6 z-50 animate-fade-in flex flex-col items-end gap-2">
+        <div className="fixed top-6 right-6 z-50 animate-fade-in flex flex-col items-end gap-2">
 
           {/* --- Profile Capsule (Expandable) --- */}
           {user ? (
@@ -204,7 +204,7 @@ export default function HomePage() {
       )}
 
       {/* ==================== 🏆 Leaderboard Floating Button (Bottom Right) ==================== */}
-      <div className={`absolute bottom-6 right-6 z-50 transition-all duration-500 ease-spring ${user ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'}`}>
+      <div className={`fixed bottom-6 right-6 z-50 transition-all duration-500 ease-spring ${user ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'}`}>
         <button
           onClick={() => {
             playSound('click');
@@ -224,7 +224,7 @@ export default function HomePage() {
 
       {/* ==================== 🛠️ Admin Dashboard Button (Bottom Left) ==================== */}
       {user?.role === 'admin' && (
-        <div className="absolute bottom-6 left-6 z-50 animate-fade-in">
+        <div className="fixed bottom-6 left-6 z-50 animate-fade-in">
           <button
             onClick={() => {
               playSound('click');
@@ -244,14 +244,14 @@ export default function HomePage() {
 
       {/* --- VIEW 1: HOME MENU --- */}
       {view === 'home' && (
-        <div className="relative w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-6 pb-8 animate-fade-in z-10 shadow-[0_0_80px_rgba(0,0,0,0.5)] overflow-hidden group/card mt-16 md:mt-12">
+        <div className="relative w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-4 sm:p-6 pb-6 sm:pb-8 animate-fade-in z-10 shadow-[0_0_80px_rgba(0,0,0,0.5)] group/card my-auto">
 
           <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-purple-400/50 to-transparent opacity-70"></div>
           <div className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-blue-400/50 to-transparent opacity-70"></div>
 
           {/* ส่วน Mascot/Logo */}
           <div className="flex flex-col items-center relative z-54 mb-2">
-            <div className="relative w-full h-[270px] scale-125 -translate-y-4 drop-shadow-[0_0_40px_rgba(167,139,250,0.5)] transition-transform duration-700 hover:scale-[1.35] pointer-events-none">
+            <div className="relative w-full h-[150px] sm:h-[200px] md:h-[270px] scale-105 sm:scale-110 md:scale-125 drop-shadow-[0_0_40px_rgba(167,139,250,0.5)] transition-transform duration-700 hover:scale-[1.35] pointer-events-none">
               <Image
                 src="/images/Model02.gif"
                 alt="SATI Digital Mascot"
@@ -263,7 +263,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 relative z-30">
+          <div className="flex flex-col gap-2 sm:gap-3 relative z-30">
 
             {/* ปุ่ม 1: ตอบคำถาม */}
             <button onClick={() => handleStart('normal')} className={`relative group w-full p-3 rounded-xl border transition-all duration-300 overflow-hidden ${!user ? 'bg-white/5 border-white/5 opacity-70 hover:opacity-100 hover:border-white/20' : 'bg-white/5 border-white/10 hover:border-green-400/50 hover:shadow-[0_0_20px_rgba(74,222,128,0.2)]'}`}>
