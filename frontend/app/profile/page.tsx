@@ -50,6 +50,14 @@ export default function ProfilePage() {
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
 
+    // Inline Message State
+    const [message, setMessageState] = useState<{ text: string; type: 'error' | 'success' } | null>(null);
+
+    const setMessage = (text: string, type: 'error' | 'success' = 'error') => {
+        setMessageState({ text, type });
+        setTimeout(() => setMessageState(null), 4000);
+    };
+
     // Fetch Stats
     const fetchGameStats = async (userId: number) => {
         try {
@@ -100,7 +108,7 @@ export default function ProfilePage() {
         playSound('click');
         if (!user) return;
         if (!tempUsername.trim()) {
-            alert("กรุณาระบุชื่อผู้ใช้งาน");
+            setMessage('กรุณาระบุชื่อผู้ใช้งาน');
             return;
         }
 
@@ -127,14 +135,14 @@ export default function ProfilePage() {
                 const updatedUser = { ...user, username: tempUsername };
                 localStorage.setItem('user', JSON.stringify(updatedUser));
                 setUser(updatedUser);
-                setEditMode('none');
-                // alert('บันทึกข้อมูลเรียบร้อย');
+                setMessage('บันทึกข้อมูลเรียบร้อย ✅', 'success');
+                setTimeout(() => setEditMode('none'), 1500);
             } else {
-                alert('ไม่สามารถอัปเดตข้อมูลได้');
+                setMessage('ไม่สามารถอัปเดตข้อมูลได้');
             }
         } catch (error) {
             console.error(error);
-            alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+            setMessage('เกิดข้อผิดพลาดในการเชื่อมต่อ');
         } finally {
             setIsLoading(false);
         }
@@ -146,36 +154,40 @@ export default function ProfilePage() {
         if (!user) return;
 
         if (!currentPasswordInput) {
-            alert('กรุณากรอกรหัสผ่านปัจจุบัน');
+            setMessage('กรุณากรอกรหัสผ่านปัจจุบัน');
+            return;
+        }
+        if (!newPassword || !confirmPassword) {
+            setMessage('กรุณากรอกรหัสผ่านใหม่และยืนยันรหัสผ่านใหม่');
             return;
         }
         if (newPassword !== confirmPassword) {
-            alert('รหัสผ่านใหม่ไม่ตรงกัน!');
+            setMessage('รหัสผ่านใหม่ไม่ตรงกัน!');
             return;
         }
         if (newPassword.length < 4) {
-            alert('รหัสผ่านใหม่สั้นเกินไป (ต้อง 4 ตัวขึ้นไป)!');
+            setMessage('รหัสผ่านใหม่สั้นเกินไป (ต้อง 4 ตัวขึ้นไป)!');
             return;
         }
         if (currentPasswordInput === newPassword) {
-            alert('รหัสผ่านใหม่ต้องไม่ซ้ำกับรหัสผ่านเดิม!');
+            setMessage('รหัสผ่านใหม่ต้องไม่ซ้ำกับรหัสผ่านเดิม!');
             return;
         }
         // เช็คค่า
-    const payload = {
-        userId: user.uid || user.id, // <--- จุดที่น่าสงสัย
-        currentPassword: currentPasswordInput,
-        newPassword: newPassword
-    };
-    console.log("ข้อมูลที่จะส่งไป Backend:", payload); 
+        const payload = {
+            userId: user.uid || user.id,
+            currentPassword: currentPasswordInput,
+            newPassword: newPassword
+        };
+        console.log("ข้อมูลที่จะส่งไป Backend:", payload);
 
-    // ถ้า userId เป็น undefined ให้แจ้งเตือน
-    if (!payload.userId) {
-        alert("Error: ไม่พบ User ID กรุณาล็อกอินใหม่");
-        return;
-    }
+        // ถ้า userId เป็น undefined ให้แจ้งเตือน
+        if (!payload.userId) {
+            setMessage('ไม่พบ User ID กรุณาล็อกอินใหม่');
+            return;
+        }
 
-    setIsLoading(true);
+        setIsLoading(true);
 
         try {
             // ✅ Auto-detect Environment
@@ -205,15 +217,15 @@ export default function ProfilePage() {
                 setCurrentPasswordInput('');
                 setNewPassword('');
                 setConfirmPassword('');
-                setEditMode('none');
-                alert('เปลี่ยนรหัสผ่านสำเร็จ!');
+                setMessage('เปลี่ยนรหัสผ่านสำเร็จ! ✅', 'success');
+                setTimeout(() => setEditMode('none'), 1500);
             } else {
-                alert(data.error || 'เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน');
+                setMessage(data.error || 'เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน');
             }
 
         } catch (error) {
             console.error("Change password error:", error);
-            alert('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
+            setMessage('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
         } finally {
             setIsLoading(false);
         }
@@ -311,6 +323,14 @@ export default function ProfilePage() {
                         {/* --- 3. Edit Name Form (เอา Emoji ออก) --- */}
                         {editMode === 'info' && (
                             <div className="w-full space-y-5 animate-slide-up text-left bg-white/5 p-4 rounded-2xl border border-white/5">
+                                {message && (
+                                    <div className={`p-3 rounded-xl text-sm font-bold text-center animate-fade-in ${message.type === 'error'
+                                        ? 'bg-red-500/15 border border-red-500/30 text-red-300'
+                                        : 'bg-green-500/15 border border-green-500/30 text-green-300'
+                                        }`}>
+                                        {message.type === 'error' ? '⚠️' : '✅'} {message.text}
+                                    </div>
+                                )}
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-gray-300 ml-1">เปลี่ยนชื่อที่ใช้แสดง</label>
                                     <input
@@ -336,6 +356,14 @@ export default function ProfilePage() {
                                 <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-200 text-xs text-center flex items-center justify-center gap-2">
                                     <Icons.Lock /> ยืนยันรหัสเดิมก่อนตั้งใหม่
                                 </div>
+                                {message && (
+                                    <div className={`p-3 rounded-xl text-sm font-bold text-center animate-fade-in ${message.type === 'error'
+                                        ? 'bg-red-500/15 border border-red-500/30 text-red-300'
+                                        : 'bg-green-500/15 border border-green-500/30 text-green-300'
+                                        }`}>
+                                        {message.type === 'error' ? '⚠️' : '✅'} {message.text}
+                                    </div>
+                                )}
 
                                 <div className="space-y-3">
                                     <div>
@@ -379,7 +407,7 @@ export default function ProfilePage() {
                         <div className="w-full flex flex-col gap-2 pt-2">
                             {editMode === 'none' ? (
                                 <>
-                                    <button onClick={() => setEditMode('info')} className="group w-full p-3.5 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-all flex items-center justify-between active:scale-[0.98]">
+                                    <button onClick={() => { setEditMode('info'); setMessageState(null); }} className="group w-full p-3.5 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-all flex items-center justify-between active:scale-[0.98]">
                                         <div className="flex items-center gap-3">
                                             <div className="p-2 rounded-lg bg-purple-500/20 text-purple-300">
                                                 <Icons.User />
@@ -389,7 +417,7 @@ export default function ProfilePage() {
                                         <div className="text-gray-500 group-hover:text-white transition-colors"><Icons.ChevronRight /></div>
                                     </button>
 
-                                    <button onClick={() => setEditMode('password')} className="group w-full p-3.5 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-all flex items-center justify-between active:scale-[0.98]">
+                                    <button onClick={() => { setEditMode('password'); setMessageState(null); }} className="group w-full p-3.5 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-all flex items-center justify-between active:scale-[0.98]">
                                         <div className="flex items-center gap-3">
                                             <div className="p-2 rounded-lg bg-yellow-500/20 text-yellow-300">
                                                 <Icons.Lock />
@@ -410,7 +438,7 @@ export default function ProfilePage() {
                                 </>
                             ) : (
                                 <button
-                                    onClick={() => setEditMode('none')}
+                                    onClick={() => { setEditMode('none'); setMessageState(null); }}
                                     className="w-full py-3 text-xs text-gray-400 font-bold uppercase tracking-widest hover:text-white flex justify-center items-center gap-2 transition-all bg-white/5 rounded-xl hover:bg-white/10"
                                 >
                                     <span>✕</span> ยกเลิกการแก้ไข
