@@ -329,7 +329,18 @@ export default function HomePage() {
       {/* --- VIEW 2: DIFFICULTY SELECTOR --- */}
       {view === 'bet' && (
         <div className="relative w-full max-w-sm bg-white/5 backdrop-blur-xl border border-white/15 rounded-[2rem] p-8 animate-fade-in z-10 shadow-[0_0_60px_rgba(0,0,0,0.4)]">
-          <div className="text-center mb-8">
+          
+          {/* 🔙 ปุ่มย้อนกลับ (อยู่บนซ้ายในกรอบ) */}
+          <button
+            onClick={() => { playSound('click'); setView('home'); }}
+            className="absolute top-7 left-6 text-gray-400 font-bold hover:text-white flex justify-center items-center gap-1 transition-all opacity-70 hover:opacity-100 group"
+            title="กลับหน้าหลัก"
+          >
+            <span className="text-lg leading-none group-hover:-translate-x-1 transition-transform duration-300">←</span> 
+            <span className="text-xs uppercase tracking-wider">กลับ</span>
+          </button>
+
+          <div className="text-center mb-8 mt-2">
             <h2 className="text-2xl font-black text-white uppercase tracking-widest mb-1">เลือกความตึง</h2>
             <div className="w-16 h-1 bg-gradient-to-r from-transparent via-purple-500 to-transparent mx-auto rounded-full"></div>
           </div>
@@ -366,13 +377,6 @@ export default function HomePage() {
               </div>
             </button>
           </div>
-
-          <button
-            onClick={() => { playSound('click'); setView('home'); }}
-            className="w-full mt-8 py-3 text-xs text-gray-400 font-bold uppercase tracking-widest hover:text-white flex justify-center items-center gap-2 transition-all opacity-70 hover:opacity-100"
-          >
-            <span>←</span> กลับหน้าหลัก
-          </button>
         </div>
       )}
     </main>
