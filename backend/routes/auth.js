@@ -56,8 +56,14 @@ export default function (prisma) {
         const { username, password } = req.body;
 
         try {
-            const user = await prisma.user.findUnique({
-                where: { username: username }
+            const user = await prisma.user.findFirst({
+                where: {
+                    OR: [
+                        { username: username },
+                        { email: username },
+                        { phone: username }
+                    ]
+                }
             });
 
             if (!user) {

@@ -13,6 +13,17 @@ export default function (prisma) {
         }
 
         try {
+            const existingUser = await prisma.user.findFirst({
+                where: {
+                    username: username,
+                    uid: { not: parseInt(userId) }
+                }
+            });
+
+            if (existingUser) {
+                return res.status(400).json({ error: "ชื่อผู้ใช้นี้ถูกใช้งานแล้ว" });
+            }
+
             await prisma.user.update({
                 where: { uid: parseInt(userId) },
                 data: { username: username }
