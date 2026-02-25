@@ -13,17 +13,24 @@ const app = express();
 const prisma = new PrismaClient();
 const port = 4000;
 
+// app.use(cors({
+//   origin: [
+//     "http://localhost:3000",
+//     "http://127.0.0.1:3000",
+//     "https://sati-game-pj.vercel.app",
+//     "https://sati-game-pj-frontend.vercel.app"
+//   ],
+//   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+//   allowedHeaders: ["Content-Type", "Authorization"],
+//   credentials: true
+// }));
+// ✅ แก้ไข CORS ให้เป็น *
 app.use(cors({
-  origin: [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "https://sati-game-pj.vercel.app",
-    "https://sati-game-pj-frontend.vercel.app"
-  ],
+  origin: "*", 
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true
-}));
+  // credentials: true // ⚠️ ต้องปิดการใช้งาน เพราะไม่สามารถใช้ร่วมกับ origin: "*" ได้
+}));  
 
 app.use(helmet({
   contentSecurityPolicy: {
