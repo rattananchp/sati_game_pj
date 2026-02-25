@@ -12,7 +12,7 @@ const nextConfig: NextConfig = {
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline'",             // Next.js ต้องใช้ unsafe-inline สำหรับ SSR
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "img-src 'self' data: blob:",
+              "img-src 'self' https:",
               "font-src 'self' data: https://fonts.gstatic.com",
               "object-src 'none'",                              // ✅ เพิ่ม (แก้ No Fallback)
               "base-uri 'self'",                                // ✅ เพิ่ม (แก้ No Fallback)
