@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false, // 🛑 Disable X-Powered-By: Next.js (Fixes "Modern Web Application" & "Information Disclosure" alerts)
   async headers() {
     return [
       {
@@ -10,13 +11,13 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline'",             // Next.js ต้องใช้ unsafe-inline สำหรับ SSR
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",             // Next.js Dev/SSR sometimes needs eval/inline
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "img-src 'self' data:;",
+              "img-src 'self' data: https://res.cloudinary.com https://avatars.githubusercontent.com", // 🛑 Fixes CSP Wildcard: replaced `https:` with specific domains or just 'self' + data: if no external images are used. adjust domains as needed.
               "font-src 'self' data: https://fonts.gstatic.com",
-              "object-src 'none'",                              // ✅ เพิ่ม (แก้ No Fallback)
-              "base-uri 'self'",                                // ✅ เพิ่ม (แก้ No Fallback)
-              "form-action 'self'",                             // ✅ เพิ่ม (แก้ No Fallback)
+              "object-src 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
               "connect-src 'self' http://localhost:4000 ws://localhost:4000 http://127.0.0.1:4000 ws://127.0.0.1:4000 https://sati-game-pj-backend.vercel.app",
               "frame-ancestors 'self'",
             ].join('; ') + ';',
@@ -30,18 +31,34 @@ const nextConfig: NextConfig = {
             value: 'nosniff',
           },
           {
-            // 🔒 HSTS: บังคับ HTTPS (แก้ ZAP: Strict-Transport-Security Not Set)
+            // 🔒 HSTS: บังคับ HTTPS
             key: 'Strict-Transport-Security',
-            value: 'max-age=31536000; includeSubDomains',
+            value: 'max-age=31536000; includeSubDomains; preload',
           },
           {
-            // 🔒 Cache-Control: ป้องกัน cache ข้อมูล sensitive
+            key: 'X-Permitted-Cross-Domain-Policies',
+            value: 'none', // 🛑 Fixes Cross-Domain Misconfiguration
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()',
+          },
+          {
+            // 🔒 Cache-Control: ป้องกัน cache ข้อมูล sensitive แบบครบถ้วน (Fixes "Retrieved from Cache")
             key: 'Cache-Control',
-            value: 'no-store, no-cache, must-revalidate, private',
+            value: 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
           },
           {
             key: 'Pragma',
             value: 'no-cache',
+          },
+          {
+            key: 'Expires',
+            value: '0',
           },
         ],
       },
