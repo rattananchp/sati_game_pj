@@ -11,8 +11,7 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline'", // 🛑 Removed 'unsafe-eval' to fix ZAP alert. (Next dev mode uses eval, but production usually doesn't need it unless using specific packages)
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              `script-src 'self' 'unsafe-inline' ${process.env.NODE_ENV === 'development' ? "'unsafe-eval'" : ""}`,
               "img-src 'self' data: https://res.cloudinary.com https://avatars.githubusercontent.com",
               "font-src 'self' data: https://fonts.gstatic.com",
               "object-src 'none'",
