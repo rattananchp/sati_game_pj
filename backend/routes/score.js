@@ -1,4 +1,6 @@
 import express from 'express';
+import { requireAuth } from '../middleware/auth.js';
+
 const router = express.Router();
 
 export default function (prisma) {
@@ -8,14 +10,11 @@ export default function (prisma) {
     // ✅ แก้จาก /save เป็น /submit-score และเพิ่ม Logic เก็บ Logs
     // ==========================================
     // POST: /submit-score
-    router.post('/submit-score', async (req, res) => {
-        const { userId, score, gameType, difficulty, logs, timeTaken } = req.body;
+    router.post('/submit-score', requireAuth, async (req, res) => {
+        // ใช้ uid จาก Token ที่ยืนยันตัวตนแล้ว ป้องกัน IDOR!
+        const uid = req.user.uid;
+        const { score, gameType, difficulty, logs, timeTaken } = req.body;
 
-        if (!userId || isNaN(parseInt(userId))) {
-            return res.status(400).json({ error: "Invalid User ID" });
-        }
-
-        const uid = parseInt(userId);
         const newScore = parseInt(score);
 
         console.log(`📥 Processing Score: User ${uid} | ${gameType} | +${newScore}`);
@@ -176,21 +175,13 @@ export default function (prisma) {
     });
 
     // ==========================================
-    // 3. User Stats (เหมือนเดิม)
-    // ==========================================
-    // ==========================================
     // 3. User Stats
     // ==========================================
-    router.get('/stats', async (req, res) => {
-        const { userId } = req.query;
-
-        if (!userId) {
-            return res.status(400).json({ error: "User ID Required" });
-        }
+    router.get('/stats', requireAuth, async (req, res) => {
+        // ใช้ uid จาก Token ที่ยืนยันตัวตนแล้ว แทนการขอ userId จาก Frontend (ป้องกันการดู Stats คนอื่นมั่วๆ หากไม่ตั้งใจ)
+        const uid = req.user.uid;
 
         try {
-            const uid = parseInt(userId);
-
             // 1. Quiz Count (✅ นับจากประวัติการเล่นจริง Game)
             const quizCount = await prisma.game.count({
                 where: { uid: uid }

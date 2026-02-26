@@ -1,14 +1,16 @@
 import express from 'express';
 import bcrypt from 'bcrypt';
+import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
 export default function (prisma) {
 
-    router.post('/update-profile', async (req, res) => {
-        const { userId, username } = req.body;
+    router.post('/update-profile', requireAuth, async (req, res) => {
+        const userId = req.user.uid;
+        const { username } = req.body;
 
-        if (!userId || !username) {
+        if (!username) {
             return res.status(400).json({ error: "ข้อมูลไม่ครบถ้วน" });
         }
 
@@ -16,7 +18,7 @@ export default function (prisma) {
             const existingUser = await prisma.user.findFirst({
                 where: {
                     username: username,
-                    uid: { not: parseInt(userId) }
+                    uid: { not: userId }
                 }
             });
 
@@ -25,7 +27,7 @@ export default function (prisma) {
             }
 
             await prisma.user.update({
-                where: { uid: parseInt(userId) },
+                where: { uid: userId },
                 data: { username: username }
             });
 
@@ -36,14 +38,12 @@ export default function (prisma) {
         }
     });
 
-    router.post('/change-password', async (req, res) => {
-        const { userId, currentPassword, newPassword } = req.body;
+    router.post('/change-password', requireAuth, async (req, res) => {
+        const userId = req.user.uid;
+        const { currentPassword, newPassword } = req.body;
 
         console.log("📩 change-password request:", { userId, hasCurrentPw: !!currentPassword, hasNewPw: !!newPassword });
 
-        if (!userId) {
-            return res.status(400).json({ error: "ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบใหม่" });
-        }
         if (!currentPassword || !newPassword) {
             return res.status(400).json({ error: "กรุณากรอกรหัสผ่านให้ครบถ้วน" });
         }
@@ -53,7 +53,7 @@ export default function (prisma) {
 
         try {
             const user = await prisma.user.findUnique({
-                where: { uid: parseInt(userId) }
+                where: { uid: userId }
             });
 
             if (!user) {
@@ -75,7 +75,7 @@ export default function (prisma) {
             const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
 
             await prisma.user.update({
-                where: { uid: parseInt(userId) },
+                where: { uid: userId },
                 data: { password: hashedPassword }
             });
 

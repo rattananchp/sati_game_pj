@@ -69,10 +69,14 @@ export default function VirusPage() {
             if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
                 apiUrl = 'http://localhost:4000';
             }
+            const token = localStorage.getItem('token');
 
             await fetch(`${apiUrl}/submit-score`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     userId: userIdToSend,
                     score: finalScore,
@@ -381,14 +385,14 @@ export default function VirusPage() {
             {/* --- 1. TUTORIAL SCREEN --- */}
             {view === 'tutorial' && (
                 <div className="relative z-10 w-full max-w-sm bg-black/60 backdrop-blur-xl border border-white/10 p-8 rounded-[2rem] shadow-2xl text-center animate-fade-in">
-                    
+
                     {/* 🔙 ปุ่มย้อนกลับ (อยู่บนซ้ายในกรอบ) */}
                     <button
                         onClick={() => { playSound('click'); router.push('/'); }}
                         className="absolute top-7 left-6 text-gray-400 font-bold hover:text-white flex justify-center items-center gap-1 transition-all opacity-70 hover:opacity-100 group"
                         title="กลับหน้าหลัก"
                     >
-                        <span className="text-lg leading-none group-hover:-translate-x-1 transition-transform duration-300">←</span> 
+                        <span className="text-lg leading-none group-hover:-translate-x-1 transition-transform duration-300">←</span>
                         <span className="text-xs uppercase tracking-wider">กลับ</span>
                     </button>
 
@@ -430,7 +434,7 @@ export default function VirusPage() {
 
                     {/* Header Score Bar */}
                     <div className="flex justify-between items-center bg-black/40 p-4 rounded-3xl border border-white/10 backdrop-blur-xl shadow-lg relative">
-                        
+
                         {/* 🔙 ปุ่มย้อนกลับ (อยู่ข้างบนเวลา) */}
                         <button
                             onClick={() => {
@@ -614,32 +618,32 @@ export default function VirusPage() {
                                     <span>🔄</span> เล่นอีกครั้ง
                                 </button>
                             </div>
-                            
+
                         </div>
                     </div>
-                    
+
                 </div>
             )}
 
             <div className={`scanline-effect z-20 transition-opacity duration-1000 ${showStats ? 'opacity-20' : 'opacity-0'}`}></div>
-            
+
             {/* --- EXIT CONFIRMATION POPUP --- */}
             {showExitPopup && (
                 <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-950/60 backdrop-blur-sm px-4 animate-fade-in">
                     <div className="bg-slate-800/90 backdrop-blur-xl border border-white/10 p-6 md:p-8 rounded-3xl shadow-2xl max-w-[320px] w-full text-center relative overflow-hidden">
-                        
+
                         {/* ไอคอนน่ารักๆ ดูเป็นมิตร */}
                         <div className="text-5xl mb-3 drop-shadow-md">
                             🚪
                         </div>
-                        
+
                         <h3 className="text-xl font-bold text-white mb-2">
                             ต้องการกลับหน้าหลัก?
                         </h3>
                         <p className="text-gray-300 text-sm mb-6 leading-relaxed">
-                            ถ้าออกตอนนี้ คะแนนของรอบนี้<br/>จะไม่ถูกบันทึกนะ แน่ใจไหม?
+                            ถ้าออกตอนนี้ คะแนนของรอบนี้<br />จะไม่ถูกบันทึกนะ แน่ใจไหม?
                         </p>
-                        
+
                         {/* ปุ่มกด (มือถือจะเรียงแนวตั้ง จอใหญ่หน่อยเรียงแนวนอน) */}
                         <div className="flex flex-col sm:flex-row gap-3">
                             <button

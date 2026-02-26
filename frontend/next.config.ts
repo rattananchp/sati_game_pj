@@ -11,9 +11,9 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",             // Next.js Dev/SSR sometimes needs eval/inline
+              "script-src 'self' 'unsafe-inline'", // 🛑 Removed 'unsafe-eval' to fix ZAP alert. (Next dev mode uses eval, but production usually doesn't need it unless using specific packages)
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "img-src 'self' data: https://res.cloudinary.com https://avatars.githubusercontent.com", // 🛑 Fixes CSP Wildcard: replaced `https:` with specific domains or just 'self' + data: if no external images are used. adjust domains as needed.
+              "img-src 'self' data: https://res.cloudinary.com https://avatars.githubusercontent.com",
               "font-src 'self' data: https://fonts.gstatic.com",
               "object-src 'none'",
               "base-uri 'self'",
@@ -31,13 +31,13 @@ const nextConfig: NextConfig = {
             value: 'nosniff',
           },
           {
-            // 🔒 HSTS: บังคับ HTTPS
+            // 🔒 HSTS: บังคับ HTTPS (Fixes Systemic Strict-Transport-Security Header Not Set)
             key: 'Strict-Transport-Security',
             value: 'max-age=31536000; includeSubDomains; preload',
           },
           {
             key: 'X-Permitted-Cross-Domain-Policies',
-            value: 'none', // 🛑 Fixes Cross-Domain Misconfiguration
+            value: 'none',
           },
           {
             key: 'Referrer-Policy',
@@ -48,7 +48,7 @@ const nextConfig: NextConfig = {
             value: 'camera=(), microphone=(), geolocation=()',
           },
           {
-            // 🔒 Cache-Control: ป้องกัน cache ข้อมูล sensitive แบบครบถ้วน (Fixes "Retrieved from Cache")
+            // 🔒 Cache-Control: ป้องกัน cache ข้อมูล sensitive แบบครบถ้วน (Fixes Retrieved from Cache)
             key: 'Cache-Control',
             value: 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
           },

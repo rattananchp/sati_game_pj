@@ -1,10 +1,20 @@
 import express from 'express';
 import bcrypt from 'bcrypt';
+import rateLimit from 'express-rate-limit';
+import { generateToken, requireAuth } from '../middleware/auth.js';
+
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 10, // Limit each IP to 10 requests per `window` (here, per 15 minutes)
+    message: { error: "เข้าสู่ระบบหรือสมัครสมาชิกบ่อยเกินไป กรุณารอสักครู่" },
+    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
 
 export default function (prisma) {
     const router = express.Router();
 
-    router.post('/register', async (req, res) => {
+    router.post('/register', authLimiter, async (req, res) => {
         const { username, password, email, phone, birthdate, address } = req.body;
 
         try {
@@ -37,8 +47,11 @@ export default function (prisma) {
                 }
             });
 
+            const token = generateToken(newUser);
+
             res.json({
                 message: "สมัครสมาชิกเรียบร้อย!",
+                token: token,
                 user: {
                     uid: newUser.uid,
                     username: newUser.username,
@@ -52,7 +65,7 @@ export default function (prisma) {
         }
     });
 
-    router.post('/login', async (req, res) => {
+    router.post('/login', authLimiter, async (req, res) => {
         const { username, password } = req.body;
 
         try {
@@ -72,8 +85,11 @@ export default function (prisma) {
 
             const match = await bcrypt.compare(password, user.password);
             if (match) {
+                const token = generateToken(user);
+
                 res.json({
                     success: true,
+                    token: token,
                     user: {
                         uid: user.uid,
                         username: user.username,
@@ -92,7 +108,9 @@ export default function (prisma) {
         }
     });
 
-    router.post('/reset-password', async (req, res) => {
+    // Option: Protect reset-password so it requires auth, OR leave it public if used for forgot pass flow (assuming it relies on OTP or knowledge of phone+username)
+    // Here we add rate limiter to it since it's a critical endpoint
+    router.post('/reset-password', authLimiter, async (req, res) => {
         const { username, phone, newPassword } = req.body;
 
         try {

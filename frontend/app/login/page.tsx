@@ -67,8 +67,11 @@ export default function LoginPage() {
         role: userRole // ✅ เพิ่ม Role เข้าไปใน LocalStorage
       };
 
-      // 4. บันทึก
+      // 4. บันทึก User และ Token ลง LocalStorage
       localStorage.setItem('user', JSON.stringify(userDataToSave));
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+      }
       console.log("💾 Saved to LocalStorage:", userDataToSave);
 
       // ============================================

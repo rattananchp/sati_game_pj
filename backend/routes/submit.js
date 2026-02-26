@@ -1,17 +1,15 @@
 import express from 'express';
+import { requireAuth } from '../middleware/auth.js';
 const router = express.Router();
 
 export default function (prisma) {
 
-    // POST: /submit-score
-    router.post('/', async (req, res) => {
-        const { userId, score, gameType, difficulty, logs, timeTaken } = req.body;
+    // POST: /submit-score (since mounted on /submit-score in server.js, the path is '/')
+    router.post('/', requireAuth, async (req, res) => {
+        // Use authenticated uid safely
+        const uid = req.user.uid;
+        const { score, gameType, difficulty, logs, timeTaken } = req.body;
 
-        if (!userId || isNaN(parseInt(userId))) {
-            return res.status(400).json({ error: "Invalid User ID" });
-        }
-
-        const uid = parseInt(userId);
         const finalScore = parseInt(score);
         const duration = parseInt(timeTaken) || 0; // ✅ รับค่าเวลาที่เล่นมา
 

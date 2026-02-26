@@ -126,9 +126,32 @@ export default function RegisterPage() {
                 throw new Error(data.error || 'สมัครสมาชิกไม่สำเร็จ');
             }
 
-            // ✅ สำเร็จจริงๆ ค่อยไปหน้า Login
-            alert('สมัครสมาชิกเรียบร้อย! กรุณาเข้าสู่ระบบ');
-            router.push('/login');
+            // ✅ 1. เช็คว่ามี user object ไหม
+            if (!data.user) {
+                throw new Error("Server ไม่ส่งข้อมูล User กลับมา");
+            }
+
+            // ✅ 2. สร้าง object เพื่อบันทึก (พยายามดึง Role ถ้ามี หรือตั้งค่าเริ่มต้น)
+            const serverUserId = data.user.uid || data.user.id;
+            const userRole = data.user.role || 'user';
+
+            const userDataToSave = {
+                uid: serverUserId,
+                id: serverUserId,
+                username: data.user.username,
+                email: data.user.email,
+                phone: data.user.phone,
+                role: userRole
+            };
+
+            // ✅ 3. บันทึก
+            localStorage.setItem('user', JSON.stringify(userDataToSave));
+            if (data.token) {
+                localStorage.setItem('token', data.token);
+            }
+
+            alert('สมัครสมาชิกเรียบร้อย! ระบบจะพาท่านเข้าสู่หน้าหลักเกม');
+            router.push('/');
             // ไม่ต้อง set false ที่นี่ เพราะเดี๋ยวหน้าเว็บเปลี่ยนแล้ว
 
         } catch (err: unknown) {

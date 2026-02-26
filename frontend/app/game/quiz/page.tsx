@@ -212,13 +212,17 @@ function QuizContent() {
                     apiUrl = 'http://localhost:4000';
                 }
                 const userIdToSend = currentUser.uid || currentUser.id;
+                const token = localStorage.getItem('token');
 
                 if (!userIdToSend) return;
 
                 // ยิงไปที่ /submit-score (ตัวใหม่ที่เราเพิ่งทำ)
                 await fetch(`${apiUrl}/submit-score`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
                     body: JSON.stringify({
                         userId: userIdToSend,
                         score: score,

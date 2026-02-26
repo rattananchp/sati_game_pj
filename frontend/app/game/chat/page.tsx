@@ -119,12 +119,15 @@ export default function ChatGamePage() {
 
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-            await fetch(`${apiUrl}/scores/save`, {
+            const token = localStorage.getItem('token');
+            await fetch(`${apiUrl}/submit-score`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
-                    userId: userIdToSend,
-                    score: 100, // สมมติว่าจบเกมได้ 100 คะแนน (หรือจะใส่ 1 เพื่อนับรอบก็ได้)
+                    score: 100, // สมมติว่าจบเกมได้ 100 คะแนน
                     gameType: 'chat'
                 })
             });

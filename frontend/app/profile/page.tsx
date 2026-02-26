@@ -68,7 +68,12 @@ export default function ProfilePage() {
             }
 
             // apiUrl = 'http://localhost:4000';
-            const res = await fetch(`${apiUrl}/scores/stats?userId=${userId}`);
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${apiUrl}/scores/stats?userId=${userId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
 
             if (res.ok) {
                 const data = await res.json();
@@ -120,10 +125,14 @@ export default function ProfilePage() {
                 apiUrl = 'http://localhost:4000';
             }
 
+            const token = localStorage.getItem('token');
             // 1. ส่งข้อมูลไปอัปเดตที่ Backend
             const res = await fetch(`${apiUrl}/user/update-profile`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     userId: user.uid || user.id,
                     username: tempUsername
@@ -196,10 +205,14 @@ export default function ProfilePage() {
                 apiUrl = 'http://localhost:4000';
             }
             //const apiUrl = 'http://localhost:4000';
+            const token = localStorage.getItem('token');
 
             const res = await fetch(`${apiUrl}/user/change-password`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 // body: JSON.stringify({
                 //     userId: user.uid || user.id,
                 //     currentPassword: currentPasswordInput,
