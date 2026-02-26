@@ -26,16 +26,17 @@ const port = 4000;
 // }));
 // ✅ แก้ไข CORS ให้เป็น *
 app.use(cors({
-  origin: "*", 
+  origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   // credentials: true // ⚠️ ต้องปิดการใช้งาน เพราะไม่สามารถใช้ร่วมกับ origin: "*" ได้
-}));  
+}));
 
 app.use(helmet({
   contentSecurityPolicy: {
+    useDefaults: false,
     directives: {
-      defaultSrc: ["'self'"],
+      defaultSrc: ["'none'"],
       scriptSrc: ["'self'"],
       styleSrc: ["'self'"],
       imgSrc: ["'self'", "data:", "blob:"],
@@ -44,28 +45,33 @@ app.use(helmet({
       baseUri: ["'self'"],
       formAction: ["'self'"],
       connectSrc: ["'self'"],
-      frameAncestors: ["'self'"],
+      frameAncestors: ["'none'"],
+      upgradeInsecureRequests: [],
     },
   },
-  strictTransportSecurity: {
+  hsts: {
     maxAge: 31536000,
     includeSubDomains: true,
+    preload: true
   },
   crossOriginEmbedderPolicy: false,
+  xContentTypeOptions: true,
+  xPermittedCrossDomainPolicies: {
+    permittedPolicies: 'none',
+  },
+  referrerPolicy: {
+    policy: 'strict-origin-when-cross-origin',
+  }
 }));
-
-app.use((req, res, next) => {
-  res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  next();
-});
 
 app.use(express.json());
 
 app.use((req, res, next) => {
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
   res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
   next();
 });
 
