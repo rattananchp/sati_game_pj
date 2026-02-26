@@ -125,8 +125,8 @@ export default function HomePage() {
       {/* ==================== ✨ พื้นหลัง ✨ ==================== */}
       <div className="fixed inset-0 z-0 overflow-hidden bg-slate-950">
         <div className="absolute inset-0 z-0 w-[200%] h-full animate-scroll-bg opacity-40">
-          <div className="w-1/2 h-full bg-cover bg-center grayscale-[50%]" style={{ backgroundImage: "url('/images/bg1.png')" }}></div>
-          <div className="w-1/2 h-full bg-cover bg-center grayscale-[50%]" style={{ backgroundImage: "url('/images/bg1.png')" }}></div>
+          <div className="w-1/2 h-full bg-cover bg-center grayscale-[50%] bg-[url('/images/bg1.png')]"></div>
+          <div className="w-1/2 h-full bg-cover bg-center grayscale-[50%] bg-[url('/images/bg1.png')]"></div>
         </div>
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-900/60 to-slate-950/90 z-10"></div>
         <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-purple-600/20 blur-[120px] animate-pulse-slow mix-blend-screen z-20"></div>
@@ -329,14 +329,14 @@ export default function HomePage() {
       {/* --- VIEW 2: DIFFICULTY SELECTOR --- */}
       {view === 'bet' && (
         <div className="relative w-full max-w-sm bg-white/5 backdrop-blur-xl border border-white/15 rounded-[2rem] p-8 animate-fade-in z-10 shadow-[0_0_60px_rgba(0,0,0,0.4)]">
-          
+
           {/* 🔙 ปุ่มย้อนกลับ (อยู่บนซ้ายในกรอบ) */}
           <button
             onClick={() => { playSound('click'); setView('home'); }}
             className="absolute top-7 left-6 text-gray-400 font-bold hover:text-white flex justify-center items-center gap-1 transition-all opacity-70 hover:opacity-100 group"
             title="กลับหน้าหลัก"
           >
-            <span className="text-lg leading-none group-hover:-translate-x-1 transition-transform duration-300">←</span> 
+            <span className="text-lg leading-none group-hover:-translate-x-1 transition-transform duration-300">←</span>
             <span className="text-xs uppercase tracking-wider">กลับ</span>
           </button>
 

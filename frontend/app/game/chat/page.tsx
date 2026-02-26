@@ -326,12 +326,10 @@ export default function ChatGamePage() {
                     {/* 1. รูปภาพเลื่อน */}
                     <div className="absolute inset-0 z-0 w-[200%] h-full animate-scroll-bg opacity-40">
                         <div
-                            className="w-1/2 h-full bg-cover bg-center grayscale-[50%]"
-                            style={{ backgroundImage: "url('/images/bg1.png')" }}
+                            className="w-1/2 h-full bg-cover bg-center grayscale-[50%] bg-[url('/images/bg1.png')]"
                         ></div>
                         <div
-                            className="w-1/2 h-full bg-cover bg-center grayscale-[50%]"
-                            style={{ backgroundImage: "url('/images/bg1.png')" }}
+                            className="w-1/2 h-full bg-cover bg-center grayscale-[50%] bg-[url('/images/bg1.png')]"
                         ></div>
                     </div>
 
@@ -360,12 +358,10 @@ export default function ChatGamePage() {
             <div className="absolute inset-0 z-0 overflow-hidden bg-slate-950 pointer-events-none">
                 <div className="absolute inset-0 z-0 w-[200%] h-full animate-scroll-bg opacity-40">
                     <div
-                        className="w-1/2 h-full bg-cover bg-center grayscale-[50%]"
-                        style={{ backgroundImage: "url('/images/bg1.png')" }}
+                        className="w-1/2 h-full bg-cover bg-center grayscale-[50%] bg-[url('/images/bg1.png')]"
                     ></div>
                     <div
-                        className="w-1/2 h-full bg-cover bg-center grayscale-[50%]"
-                        style={{ backgroundImage: "url('/images/bg1.png')" }}
+                        className="w-1/2 h-full bg-cover bg-center grayscale-[50%] bg-[url('/images/bg1.png')]"
                     ></div>
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-900/60 to-slate-950/90 z-10"></div>

@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  poweredByHeader: false, // 🛑 Disable X-Powered-By: Next.js (Fixes "Modern Web Application" & "Information Disclosure" alerts)
+  poweredByHeader: false,
   async headers() {
     return [
       {
@@ -30,7 +30,6 @@ const nextConfig: NextConfig = {
             value: 'nosniff',
           },
           {
-            // 🔒 HSTS: บังคับ HTTPS (Fixes Systemic Strict-Transport-Security Header Not Set)
             key: 'Strict-Transport-Security',
             value: 'max-age=31536000; includeSubDomains; preload',
           },
@@ -47,7 +46,6 @@ const nextConfig: NextConfig = {
             value: 'camera=(), microphone=(), geolocation=()',
           },
           {
-            // 🔒 Cache-Control: ป้องกัน cache ข้อมูล sensitive แบบครบถ้วน (Fixes Retrieved from Cache)
             key: 'Cache-Control',
             value: 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
           },
