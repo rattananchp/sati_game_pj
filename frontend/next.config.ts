@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval'",             // Next.js Dev/SSR sometimes needs eval/inline
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "img-src 'self' data:;",
+              "img-src 'self' data:",
               // "img-src 'self' data: https://res.cloudinary.com https://avatars.githubusercontent.com", // 🛑 Fixes CSP Wildcard: replaced `https:` with specific domains or just 'self' + data: if no external images are used. adjust domains as needed.
               "font-src 'self' data: https://fonts.gstatic.com",
               "object-src 'none'",
