@@ -1,7 +1,7 @@
 'use client';
 /// <reference path="../../src/global.d.ts" />
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { playSound } from '@/app/lib/sound';
 
@@ -52,10 +52,23 @@ export default function ProfilePage() {
 
     // Inline Message State
     const [message, setMessageState] = useState<{ text: string; type: 'error' | 'success' } | null>(null);
+    const messageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const setMessage = (text: string, type: 'error' | 'success' = 'error') => {
         setMessageState({ text, type });
-        setTimeout(() => setMessageState(null), 4000);
+        if (messageTimeoutRef.current) {
+            clearTimeout(messageTimeoutRef.current);
+        }
+        messageTimeoutRef.current = setTimeout(() => setMessageState(null), 4000);
+    };
+
+    const closeEditMode = () => {
+        setEditMode('none');
+        setMessageState(null);
+        if (user?.username) setTempUsername(user.username);
+        setCurrentPasswordInput('');
+        setNewPassword('');
+        setConfirmPassword('');
     };
 
     // Fetch Stats
@@ -145,9 +158,10 @@ export default function ProfilePage() {
                 localStorage.setItem('user', JSON.stringify(updatedUser));
                 setUser(updatedUser);
                 setMessage('บันทึกข้อมูลเรียบร้อย ✅', 'success');
-                setTimeout(() => setEditMode('none'), 1500);
+                setTimeout(() => closeEditMode(), 1500);
             } else {
-                setMessage('ไม่สามารถอัปเดตข้อมูลได้');
+                const data = await res.json();
+                setMessage(data.error || 'ไม่สามารถอัปเดตข้อมูลได้');
             }
         } catch (error) {
             console.error(error);
@@ -224,14 +238,15 @@ export default function ProfilePage() {
             const data = await res.json();
 
             if (res.ok) {
-                const updatedUser = { ...user, password: newPassword };
+                const updatedUser = { ...user };
+                delete updatedUser.password; // เพื่อความปลอดภัย ไม่ควรบันทึกรหัสผ่านใน LocalStorage
                 localStorage.setItem('user', JSON.stringify(updatedUser));
 
                 setCurrentPasswordInput('');
                 setNewPassword('');
                 setConfirmPassword('');
                 setMessage('เปลี่ยนรหัสผ่านสำเร็จ! ✅', 'success');
-                setTimeout(() => setEditMode('none'), 1500);
+                setTimeout(() => closeEditMode(), 1500);
             } else {
                 setMessage(data.error || 'เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน');
             }
@@ -451,7 +466,7 @@ export default function ProfilePage() {
                                 </>
                             ) : (
                                 <button
-                                    onClick={() => { setEditMode('none'); setMessageState(null); }}
+                                    onClick={closeEditMode}
                                     className="w-full py-3 text-xs text-gray-400 font-bold uppercase tracking-widest hover:text-white flex justify-center items-center gap-2 transition-all bg-white/5 rounded-xl hover:bg-white/10"
                                 >
                                     <span>✕</span> ยกเลิกการแก้ไข
