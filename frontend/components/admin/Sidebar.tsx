@@ -16,15 +16,15 @@ export default function Sidebar({ currentView, setCurrentView }: SidebarProps) {
                     <span className="text-3xl filter drop-shadow no-select">🛡️</span>
                     <span className="hidden md:block ml-3 font-bold text-white tracking-widest text-lg">ADMIN</span>
                 </div>
-                <nav className="p-4 space-y-2">
-                    <MenuButton id="dashboard" icon="📊" label="ภาพรวมระบบ" currentView={currentView} setCurrentView={setCurrentView} />
-                    <MenuButton id="quiz_manage" icon="📝" label="คลังข้อสอบ" currentView={currentView} setCurrentView={setCurrentView} />
-                    <MenuButton id="virus_manage" icon="🦠" label="ข้อมูล Virus" currentView={currentView} setCurrentView={setCurrentView} />
-                    <MenuButton id="users" icon="👥" label="รายชื่อผู้เล่น" currentView={currentView} setCurrentView={setCurrentView} />
+                <nav className="p-4 space-y-3">
+                    <MenuButton id="dashboard" icon="📊" label="สถิติภาพรวม" currentView={currentView} setCurrentView={setCurrentView} />
+                    <MenuButton id="quiz_manage" icon="📝" label="จัดการข้อสอบ" currentView={currentView} setCurrentView={setCurrentView} />
+                    <MenuButton id="virus_manage" icon="🦠" label="จัดการไวรัส" currentView={currentView} setCurrentView={setCurrentView} />
+                    <MenuButton id="users" icon="👥" label="จัดการผู้เล่น" currentView={currentView} setCurrentView={setCurrentView} />
                     <div className="pt-4 pb-2">
                         <div className="h-px bg-white/10 mx-2"></div>
                     </div>
-                    <MenuButton id="add_question" icon="➕" label="เพิ่มโจทย์ใหม่" currentView={currentView} setCurrentView={setCurrentView} />
+                    <MenuButton id="add_question" icon="➕" label="สร้างโจทย์ใหม่" currentView={currentView} setCurrentView={setCurrentView} />
                 </nav>
             </div>
             <div className="p-4 border-t border-white/10 bg-black/20">
@@ -40,12 +40,12 @@ export default function Sidebar({ currentView, setCurrentView }: SidebarProps) {
 const MenuButton = ({ id, icon, label, currentView, setCurrentView }: { id: ViewState, icon: string, label: string, currentView: ViewState, setCurrentView: (v: ViewState) => void }) => (
     <button
         onClick={() => setCurrentView(id)}
-        className={`w-full flex items-center justify-center md:justify-start gap-4 p-3 rounded-xl transition-all duration-200 outline-none
+        className={`w-full flex items-center justify-center md:justify-start gap-4 p-4 rounded-xl transition-all duration-200 outline-none
         ${currentView === id
                 ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 translate-x-1'
-                : 'text-gray-400 hover:bg-white/5 hover:text-white hover:translate-x-1'}`}
+                : 'text-gray-300 hover:bg-white/10 hover:text-white hover:translate-x-1'}`}
     >
-        <span className="text-xl filter drop-shadow-sm">{icon}</span>
-        <span className="hidden md:block font-medium text-sm tracking-wide">{label}</span>
+        <span className="text-2xl filter drop-shadow-sm">{icon}</span>
+        <span className="hidden md:block font-bold text-base tracking-wide">{label}</span>
     </button>
 );

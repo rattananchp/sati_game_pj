@@ -4,16 +4,17 @@ import { useRouter } from 'next/navigation';
 
 // Components
 import Sidebar from '@/components/admin/Sidebar';
-import DashboardHome from '@/components/admin/DashboardHome';
-import QuizManager from '@/components/admin/QuizManager';
-import VirusManager from '@/components/admin/VirusManager';
-import UserManager from '@/components/admin/UserManager';
-import AddQuestion from '@/components/admin/AddQuestion';
-import QuestionDetailModal from '@/components/admin/QuestionDetailModal';
-import EditModal from '@/components/admin/EditModal';
+import Dashboard from '@/components/admin/Dashboard';
+import QuizAdmin from '@/components/admin/QuizAdmin';
+import VirusAdmin from '@/components/admin/VirusAdmin';
+import Users from '@/components/admin/Users';
+import QuestionAdd from '@/components/admin/QuestionAdd';
+import QuestionDetail from '@/components/admin/QuestionDetail';
+import QuestionEdit from '@/components/admin/QuestionEdit';
 
 // Types
-import { ViewState, DashboardData, QuestionStats, QuestionDetail } from '@/components/admin/types';
+import { ViewState, DashboardData, QuestionStats } from '@/components/admin/types';
+import type { QuestionDetail as QuestionDetailType } from '@/components/admin/types';
 
 export default function AdminDashboard() {
     const router = useRouter();
@@ -32,7 +33,7 @@ export default function AdminDashboard() {
     // Shared State for Modals & Actions
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [selectedQuestion, setSelectedQuestion] = useState<QuestionStats | null>(null);
-    const [questionDetails, setQuestionDetails] = useState<QuestionDetail[]>([]);
+    const [questionDetails, setQuestionDetails] = useState<QuestionDetailType[]>([]);
     const [isLoadingDetail, setIsLoadingDetail] = useState(false);
     const [editingQuestionId, setEditingQuestionId] = useState<number | null>(null);
 
@@ -95,58 +96,78 @@ export default function AdminDashboard() {
     };
 
     if (!isAuthorized || loading) return (
-        <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white gap-4">
+        <div className="min-h-screen bg-transparent flex flex-col items-center justify-center text-white gap-4">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
             <div className="text-gray-400 text-sm animate-pulse">กำลังตรวจสอบสิทธิ์...</div>
         </div>
     );
 
     return (
-        <div className="flex h-screen w-full bg-slate-950 text-gray-100 font-sans overflow-hidden">
-            <Sidebar currentView={currentView} setCurrentView={setCurrentView} />
+        <div className="flex h-screen w-full text-gray-100 font-sans overflow-hidden relative">
 
-            <main className="flex-1 overflow-y-auto p-6 md:p-10 relative custom-scrollbar">
-                {/* Background Ambience */}
-                <div className="absolute top-0 left-0 w-full h-96 bg-indigo-900/10 blur-[120px] pointer-events-none"></div>
+            {/* Animated Background Layer */}
+            <div className="absolute inset-0 overflow-hidden z-0 pointer-events-none">
+                <div
+                    className="absolute inset-0 w-full h-full animate-pan-bg"
+                    style={{
+                        backgroundImage: "url('/images/bg1.png')",
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        backgroundRepeat: 'no-repeat'
+                    }}
+                />
+            </div>
 
-                {currentView === 'dashboard' && <DashboardHome data={data} />}
+            {/* Background Overlay for better readability (Removed backdrop-blur for performance) */}
+            <div className="absolute inset-0 bg-slate-950/80 pointer-events-none z-0"></div>
 
-                {currentView === 'quiz_manage' && (
-                    <QuizManager
+            <div className="relative z-10 flex h-full w-full">
+                <Sidebar currentView={currentView} setCurrentView={setCurrentView} />
+
+                <main className="flex-1 overflow-y-auto p-6 md:p-10 relative custom-scrollbar">
+                    {/* Background Ambience (Replaced expensive blur with radial gradient) */}
+                    <div className="absolute top-0 left-0 w-full h-96 pointer-events-none bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/20 via-transparent to-transparent"></div>
+
+                    {currentView === 'dashboard' && <Dashboard data={data} />}
+
+                    {currentView === 'quiz_manage' && (
+                        <QuizAdmin
+                            API_URL={API_URL}
+                            onQuestionClick={handleQuestionClick}
+                            onEdit={setEditingQuestionId}
+                            onDelete={handleDelete}
+                            refreshTrigger={refreshTrigger}
+                            setCurrentView={setCurrentView}
+                        />
+                    )}
+
+                    {currentView === 'virus_manage' && <VirusAdmin API_URL={API_URL} />}
+
+                    {currentView === 'users' && <Users API_URL={API_URL} />}
+
+                    {currentView === 'add_question' && <QuestionAdd API_URL={API_URL} />}
+                </main>
+
+                {/* Modals */}
+                {selectedQuestion && (
+                    <QuestionDetail
+                        question={selectedQuestion}
+                        details={questionDetails}
+                        isLoading={isLoadingDetail}
                         API_URL={API_URL}
-                        onQuestionClick={handleQuestionClick}
-                        onEdit={setEditingQuestionId}
-                        onDelete={handleDelete}
-                        refreshTrigger={refreshTrigger}
+                        onClose={() => setSelectedQuestion(null)}
                     />
                 )}
 
-                {currentView === 'virus_manage' && <VirusManager API_URL={API_URL} />}
-
-                {currentView === 'users' && <UserManager API_URL={API_URL} />}
-
-                {currentView === 'add_question' && <AddQuestion API_URL={API_URL} />}
-            </main>
-
-            {/* Modals */}
-            {selectedQuestion && (
-                <QuestionDetailModal
-                    question={selectedQuestion}
-                    details={questionDetails}
-                    isLoading={isLoadingDetail}
-                    API_URL={API_URL}
-                    onClose={() => setSelectedQuestion(null)}
-                />
-            )}
-
-            {editingQuestionId && (
-                <EditModal
-                    questionId={editingQuestionId}
-                    API_URL={API_URL}
-                    onClose={() => setEditingQuestionId(null)}
-                    onRefresh={handleRefresh}
-                />
-            )}
+                {editingQuestionId && (
+                    <QuestionEdit
+                        questionId={editingQuestionId}
+                        API_URL={API_URL}
+                        onClose={() => setEditingQuestionId(null)}
+                        onRefresh={handleRefresh}
+                    />
+                )}
+            </div>
         </div>
     );
 }

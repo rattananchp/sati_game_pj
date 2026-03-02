@@ -7,26 +7,54 @@
 /* 3. Config Theme ใน CSS โดยตรง (แทน tailwind.config.js) */
 @theme {
   --font-sans: "Chakra Petch", sans-serif;
-  
+
   /* Custom Animations */
   --animate-pulse-slow: pulse 3s infinite;
   --animate-spin-slow: spinSlow 3s linear infinite;
   --animate-fade-in: fadeIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   --animate-shake: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
-  
+
   @keyframes spinSlow {
-    to { transform: rotate(360deg); }
+    to {
+      transform: rotate(360deg);
+    }
   }
-  
+
   @keyframes fadeIn {
-    from { opacity: 0; transform: scale(0.9); filter: blur(10px); }
-    to { opacity: 1; transform: scale(1); filter: blur(0); }
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+      filter: blur(10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: scale(1);
+      filter: blur(0);
+    }
   }
 
   @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-    20%, 40%, 60%, 80% { transform: translateX(5px); }
+
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+
+    10%,
+    30%,
+    50%,
+    70%,
+    90% {
+      transform: translateX(-5px);
+    }
+
+    20%,
+    40%,
+    60%,
+    80% {
+      transform: translateX(5px);
+    }
   }
 }
 
@@ -89,16 +117,29 @@
 
 /* --- Keyframes for Game Elements --- */
 @keyframes shakeElement {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(-5deg); }
-  75% { transform: rotate(5deg); }
+
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  25% {
+    transform: rotate(-5deg);
+  }
+
+  75% {
+    transform: rotate(5deg);
+  }
 }
 
 @keyframes pulseBorder {
-  0%, 100% {
+
+  0%,
+  100% {
     border-color: rgba(239, 68, 68, 0.5);
     box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
   }
+
   50% {
     border-color: rgba(239, 68, 68, 1);
     box-shadow: 0 0 40px rgba(239, 68, 68, 0.6);
@@ -106,8 +147,15 @@
 }
 
 @keyframes floatUp {
-  0% { transform: translateY(0) scale(1); opacity: 1; }
-  100% { transform: translateY(-50px) scale(1.5); opacity: 0; }
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(-50px) scale(1.5);
+    opacity: 0;
+  }
 }
 
 /* --- Panel & Glassmorphism --- */
@@ -147,10 +195,12 @@
   border-color: rgba(16, 185, 129, 0.5);
   box-shadow: 0 5px 20px -5px rgba(16, 185, 129, 0.2);
 }
+
 .btn-menu-sleek.red:hover {
   border-color: rgba(239, 68, 68, 0.5);
   box-shadow: 0 5px 20px -5px rgba(239, 68, 68, 0.2);
 }
+
 .btn-menu-sleek.blue:hover {
   border-color: rgba(59, 130, 246, 0.5);
   box-shadow: 0 5px 20px -5px rgba(59, 130, 246, 0.2);
@@ -183,9 +233,23 @@
   color: #10b981;
 }
 
-.btn-menu-sleek.green:hover .icon-box { background: #10b981; color: #000; border-color: #10b981; }
-.btn-menu-sleek.red:hover .icon-box { background: #ef4444; color: #000; border-color: #ef4444; }
-.btn-menu-sleek.blue:hover .icon-box { background: #3b82f6; color: #000; border-color: #3b82f6; }
+.btn-menu-sleek.green:hover .icon-box {
+  background: #10b981;
+  color: #000;
+  border-color: #10b981;
+}
+
+.btn-menu-sleek.red:hover .icon-box {
+  background: #ef4444;
+  color: #000;
+  border-color: #ef4444;
+}
+
+.btn-menu-sleek.blue:hover .icon-box {
+  background: #3b82f6;
+  color: #000;
+  border-color: #3b82f6;
+}
 
 /* --- Text Effects --- */
 .float-text {
@@ -195,7 +259,7 @@
   pointer-events: none;
   animation: floatUp 0.8s forwards;
   z-index: 50;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
 }
 
 .screen-glitch {
@@ -204,13 +268,31 @@
 }
 
 @keyframes glitch-anim {
-  0% { transform: translate(0); }
-  20% { transform: translate(-2px, 2px); }
-  40% { transform: translate(-2px, -2px); }
-  60% { transform: translate(2px, 2px); }
-  80% { transform: translate(2px, -2px); }
-  100% { transform: translate(0); }
+  0% {
+    transform: translate(0);
+  }
+
+  20% {
+    transform: translate(-2px, 2px);
+  }
+
+  40% {
+    transform: translate(-2px, -2px);
+  }
+
+  60% {
+    transform: translate(2px, 2px);
+  }
+
+  80% {
+    transform: translate(2px, -2px);
+  }
+
+  100% {
+    transform: translate(0);
+  }
 }
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -232,51 +314,69 @@ body {
 .custom-scrollbar::-webkit-scrollbar {
   width: 8px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 10px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #3f3f46; /* สีเทาเข้ม */
+  background: #3f3f46;
+  /* สีเทาเข้ม */
   border-radius: 10px;
-  border: 2px solid rgba(0,0,0,0); /* ทำขอบมนๆ */
+  border: 2px solid rgba(0, 0, 0, 0);
+  /* ทำขอบมนๆ */
   background-clip: padding-box;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #10b981; /* สีเขียวเมื่อเอาเมาส์ชี้ */
+  background: #10b981;
+  /* สีเขียวเมื่อเอาเมาส์ชี้ */
 }
 
 /* Animation */
 @keyframes enter {
-  0% { opacity: 0; transform: translateY(10px); }
-  100% { opacity: 1; transform: translateY(0); }
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
-.animate-enter { animation: enter 0.5s ease-out forwards; }
+
+.animate-enter {
+  animation: enter 0.5s ease-out forwards;
+}
 
 /* แก้ไขสีพื้นหลังเวลาใช้ Auto-fill */
 input:-webkit-autofill,
-input:-webkit-autofill:hover, 
-input:-webkit-autofill:focus, 
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
-    /* 1. ใช้ Box Shadow ดันสีเข้ามาข้างในเพื่อกลบสีเหลือง */
-    /* #0f172a คือสี hex ของ slate-900 (สีพื้นหลังธีมคุณ) */
-    -webkit-box-shadow: 0 0 0 30px #0f172a inset !important;
-    
-    /* 2. บังคับสีตัวอักษรให้เป็นสีขาว */
-    -webkit-text-fill-color: white !important;
-    
-    /* 3. เทคนิคทำให้พื้นหลังโปร่งใส (Delay การเปลี่ยนสีไปนานๆ) */
-    transition: background-color 5000s ease-in-out 0s;
-    
-    /* ปรับขอบมนให้เท่ากับ input เดิม */
-    border-radius: 0.75rem; 
+  /* 1. ใช้ Box Shadow ดันสีเข้ามาข้างในเพื่อกลบสีเหลือง */
+  /* #0f172a คือสี hex ของ slate-900 (สีพื้นหลังธีมคุณ) */
+  -webkit-box-shadow: 0 0 0 30px #0f172a inset !important;
+
+  /* 2. บังคับสีตัวอักษรให้เป็นสีขาว */
+  -webkit-text-fill-color: white !important;
+
+  /* 3. เทคนิคทำให้พื้นหลังโปร่งใส (Delay การเปลี่ยนสีไปนานๆ) */
+  transition: background-color 5000s ease-in-out 0s;
+
+  /* ปรับขอบมนให้เท่ากับ input เดิม */
+  border-radius: 0.75rem;
 }
+
 /* ต่อท้ายไฟล์ globals.css */
 
 @keyframes scrollLeft {
   0% {
     transform: translateX(0);
   }
+
   100% {
     transform: translateX(-50%);
   }
@@ -284,6 +384,24 @@ input:-webkit-autofill:active {
 
 .animate-scroll-bg {
   /* เปลี่ยนจาก 60s เป็น 120s หรือ 180s (ยิ่งเลขเยอะ ยิ่งช้า) */
-  animation: scrollLeft 120s linear infinite; 
+  animation: scrollLeft 120s linear infinite;
   display: flex;
+}
+
+/* --- Panel Animation --- */
+@keyframes panBackground {
+  0% {
+    transform: scale(1.1) translate3d(2%, 0, 0);
+  }
+
+  100% {
+    transform: scale(1.1) translate3d(-2%, 0, 0);
+  }
+}
+
+.animate-pan-bg {
+  animation: panBackground 40s ease-in-out infinite alternate;
+  will-change: transform;
+  backface-visibility: hidden;
+  perspective: 1000px;
 }

@@ -1,6 +1,6 @@
 import { DashboardData } from './types';
 
-export default function DashboardHome({ data }: { data: DashboardData | null }) {
+export default function Dashboard({ data }: { data: DashboardData | null }) {
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <header className="mb-8">

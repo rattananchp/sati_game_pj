@@ -1,11 +1,11 @@
 import { ChangeEvent, useState } from 'react';
 import { QuestionFormData } from './types';
 
-interface AddQuestionProps {
+interface QuestionAddProps {
     API_URL: string;
 }
 
-export default function AddQuestion({ API_URL }: AddQuestionProps) {
+export default function QuestionAdd({ API_URL }: QuestionAddProps) {
     const initialQuestion: QuestionFormData = {
         question: '', choice1: '', choice2: '', choice3: '', choice4: '',
         correctIndex: 0, level: 'hard', explanation: ''
