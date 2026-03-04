@@ -1,9 +1,33 @@
+export type ViewState = 'dashboard' | 'quiz_manage' | 'virus_manage' | 'users' | 'add_question' | 'chat_manage';
 export interface Overview {
     totalUsers: number;
     totalGames: number;
     totalVirusGames: number;
+    
 }
-
+// 1. สร้าง Type สำหรับตัวเลือก (Choice) ก่อน
+export interface Choice {
+    text: string;
+    isCorrect?: boolean;
+    reaction: string;
+    next?: ChatScenario; // ✅ เรียกใช้ ChatScenario แบบ Recursive ได้เลยใน Interface
+    memeTitle?: string;
+    memeDesc?: string;
+    memeIcon?: string;
+    lossType?: 'money' | 'data';
+}
+export interface ChatScenario {
+    _id?: string; // เผื่อไว้สำหรับ MongoDB ID
+    id: string;
+    category: string;
+    categoryTitle: string;
+    level: number;
+    name: string;
+    avatar: string;
+    lossType?: 'money' | 'data';
+    msgs: string[];
+    choices: Choice[];
+}
 export interface QuestionStats {
     qid: number;
     question: string;
@@ -58,4 +82,3 @@ export interface User {
     total_games?: number; // ✅ เพิ่ม: จำนวนเกมที่เล่น
 }
 
-export type ViewState = 'dashboard' | 'quiz_manage' | 'virus_manage' | 'users' | 'add_question';

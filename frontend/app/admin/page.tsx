@@ -11,7 +11,7 @@ import Users from '@/components/admin/Users';
 import QuestionAdd from '@/components/admin/QuestionAdd';
 import QuestionDetail from '@/components/admin/QuestionDetail';
 import QuestionEdit from '@/components/admin/QuestionEdit';
-
+import ChatAdmin from '@/components/admin/ChatAdmin';
 // Types
 import { ViewState, DashboardData, QuestionStats } from '@/components/admin/types';
 import type { QuestionDetail as QuestionDetailType } from '@/components/admin/types';
@@ -146,6 +146,8 @@ export default function AdminDashboard() {
                     {currentView === 'users' && <Users API_URL={API_URL} />}
 
                     {currentView === 'add_question' && <QuestionAdd API_URL={API_URL} />}
+
+                    {currentView === 'chat_manage' && <ChatAdmin API_URL={API_URL} />}
                 </main>
 
                 {/* Modals */}
