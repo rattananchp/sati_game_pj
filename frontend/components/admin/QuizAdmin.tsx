@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { QuestionStats, ViewState } from './types';
+import { QuestionStats, ViewState, Category } from './types';
 
 interface QuizAdminProps {
     API_URL: string;
@@ -16,13 +16,28 @@ export default function QuizAdmin({ API_URL, onQuestionClick, onEdit, onDelete, 
     const [totalPages, setTotalPages] = useState(1);
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
     const [filterLevel, setFilterLevel] = useState<string>('all');
+    const [filterCategory, setFilterCategory] = useState<string>('all');
+    const [categories, setCategories] = useState<Category[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const res = await fetch(`${API_URL}/admin/categories`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setCategories(data.categories || []);
+                }
+            } catch (err) { console.error("Fetch categories failed", err); }
+        };
+        fetchCategories();
+    }, [API_URL]);
 
     useEffect(() => {
         const fetchQuestions = async () => {
             setIsLoading(true);
             try {
-                const res = await fetch(`${API_URL}/admin/questions?page=${currentPage}&limit=16&sort=${sortOrder}&level=${filterLevel}`);
+                const res = await fetch(`${API_URL}/admin/questions?page=${currentPage}&limit=16&sort=${sortOrder}&level=${filterLevel}&category=${filterCategory}`);
                 const json = await res.json();
 
                 let sortedQuestions = json.questions || [];
@@ -43,7 +58,7 @@ export default function QuizAdmin({ API_URL, onQuestionClick, onEdit, onDelete, 
             }
         };
         fetchQuestions();
-    }, [API_URL, currentPage, sortOrder, filterLevel, refreshTrigger]);
+    }, [API_URL, currentPage, sortOrder, filterLevel, filterCategory, refreshTrigger]);
 
     const handleNextPage = () => { if (currentPage < totalPages) setCurrentPage(p => p + 1); };
     const handlePrevPage = () => { if (currentPage > 1) setCurrentPage(p => p - 1); };
@@ -74,6 +89,16 @@ export default function QuizAdmin({ API_URL, onQuestionClick, onEdit, onDelete, 
                         </button>
                     )}
                     <select
+                        value={filterCategory}
+                        onChange={(e) => { setFilterCategory(e.target.value); setCurrentPage(1); }}
+                        className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-sm text-gray-300 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 cursor-pointer transition-colors shadow-inner"
+                    >
+                        <option value="all">📁 ทุกหมวดหมู่</option>
+                        {categories.map((cat) => (
+                            <option key={cat.cg_id} value={cat.cg_id}>{cat.mode_cg}</option>
+                        ))}
+                    </select>
+                    <select
                         value={filterLevel}
                         onChange={(e) => { setFilterLevel(e.target.value); setCurrentPage(1); }}
                         className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-sm text-gray-300 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 cursor-pointer transition-colors shadow-inner"
@@ -100,7 +125,8 @@ export default function QuizAdmin({ API_URL, onQuestionClick, onEdit, onDelete, 
                         <thead className="bg-slate-950/80 text-gray-400 uppercase text-xs sticky top-0 z-10 backdrop-blur-md">
                             <tr>
                                 <th className="p-4 w-[5%] text-center">#</th>
-                                <th className="p-4 w-[50%]">คำถาม</th>
+                                <th className="p-4 w-[35%]">คำถาม</th>
+                                <th className="p-4 w-[15%] text-left">หมวดหมู่</th>
                                 <th className="p-4 w-[10%] text-center">ระดับ</th>
                                 <th className="p-4 w-[15%] text-right">ความถูกต้อง</th>
                                 <th className="p-4 w-[20%] text-center">จัดการ</th>
@@ -108,17 +134,22 @@ export default function QuizAdmin({ API_URL, onQuestionClick, onEdit, onDelete, 
                         </thead>
                         <tbody className="divide-y divide-white/5">
                             {isLoading ? (
-                                <tr><td colSpan={5} className="p-20 text-center text-gray-500 animate-pulse">กำลังโหลดข้อมูล...</td></tr>
+                                <tr><td colSpan={6} className="p-20 text-center text-gray-500 animate-pulse">กำลังโหลดข้อมูล...</td></tr>
                             ) : questions.length === 0 ? (
-                                <tr><td colSpan={5} className="p-20 text-center text-gray-500">ไม่พบข้อมูลคำถาม</td></tr>
+                                <tr><td colSpan={6} className="p-20 text-center text-gray-500">ไม่พบข้อมูลคำถาม</td></tr>
                             ) : questions.map((q, idx) => (
                                 <tr key={q.qid} onClick={() => onQuestionClick(q)} className="hover:bg-white-[0.02] cursor-pointer transition-all group border-b border-white/5 last:border-0 relative">
                                     <td className="p-5 text-center text-gray-500 font-mono text-xs">{q.qid}</td>
                                     <td className="p-5">
                                         <div className="text-gray-200 font-medium group-hover:text-white transition-colors text-base line-clamp-2 leading-relaxed">{q.question}</div>
-                                        <div className="text-[11px] text-gray-500 mt-2 flex items-center gap-3 font-mono">
-                                            <span className="flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded"><span className="text-[10px]">👁️</span> {q.totalAttempts} ครั้ง</span>
+                                        <div className="text-[11px] text-gray-400 mt-2 flex items-center gap-2 font-mono flex-wrap">
+                                            <span className="flex items-center gap-1.5 bg-blue-500/10 text-blue-300 font-semibold px-2.5 py-0.5 rounded border border-blue-500/20 shadow-[0_0_8px_rgba(59,130,246,0.15)] group-hover:bg-blue-500/20 group-hover:border-blue-500/40 transition-colors">
+                                                <span className="text-[11px] opacity-90 drop-shadow-sm">👁️</span> {q.totalAttempts} ครั้ง
+                                            </span>
                                         </div>
+                                    </td>
+                                    <td className="p-5 text-left text-gray-400 text-sm">
+                                        {q.category || '-'}
                                     </td>
                                     <td className="p-5 text-center">
                                         <span className={`px-4 py-1.5 text-[10px] rounded-lg uppercase font-black tracking-widest border ${q.level === 'hard' ? 'bg-red-500/10 text-red-400 border-red-500/30 shadow-[0_0_10px_rgba(239,68,68,0.1)]' :

@@ -3,6 +3,17 @@ const router = express.Router();
 
 export default function (prisma) {
 
+    // 0. API: ดึงหมวดหมู่ทั้งหมด
+    router.get('/categories', async (req, res) => {
+        try {
+            const categories = await prisma.category.findMany();
+            res.json({ categories });
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ error: "Fetch categories failed" });
+        }
+    });
+
     // 1. API: ดึงภาพรวม (Overview)
     router.get('/stats', async (req, res) => {
         try {
@@ -35,16 +46,21 @@ export default function (prisma) {
             const limit = parseInt(req.query.limit) || 16;
             const sortOrder = req.query.sort || 'asc';
             const levelFilter = req.query.level || 'all'; // รับค่า level จากหน้าเว็บ
+            const categoryFilter = req.query.category || 'all'; // รับค่า category จากหน้าเว็บ
 
             // สร้างเงื่อนไข Where
             let whereCondition = {};
             if (levelFilter !== 'all') {
                 whereCondition.level = levelFilter; // ถ้าไม่ใช่ all ให้กรองตาม level
             }
+            if (categoryFilter !== 'all') {
+                whereCondition.cg_id = parseInt(categoryFilter); // ถ้าไม่ใช่ all ให้กรองตาม cg_id
+            }
 
             const allQuestions = await prisma.questions.findMany({
                 where: whereCondition, // ✅ ใช้เงื่อนไขที่สร้างขึ้น
                 include: {
+                    category: { select: { mode_cg: true } },
                     answerLogs: {
                         select: { is_correct: true }
                     }
@@ -61,6 +77,7 @@ export default function (prisma) {
                     qid: q.qid,
                     question: q.question,
                     level: q.level,
+                    category: q.category ? q.category.mode_cg : '-',
                     correctRate: parseFloat(correctRate.toFixed(1)),
                     totalAttempts: totalAttempts
                 };
@@ -125,6 +142,9 @@ export default function (prisma) {
 
             res.json({
                 question: question.question,
+                level: question.level,
+                cg_id: question.cg_id,
+                explanation: question.explanation,
                 totalAttempts,
                 breakdown: breakdown
             });
@@ -140,7 +160,7 @@ export default function (prisma) {
     // 4. API: เพิ่มโจทย์ใหม่ (Add Question)
     router.post('/question/add', async (req, res) => {
         try {
-            const { question, choices, correctIndex, level, explanation } = req.body;
+            const { question, choices, correctIndex, level, explanation, cg_id } = req.body;
 
             if (!question || !choices || choices.length < 2 || correctIndex === undefined) {
                 return res.status(400).json({ error: "ข้อมูลไม่ครบถ้วน" });
@@ -161,6 +181,7 @@ export default function (prisma) {
                     question: question,
                     level: level || 'hard',
                     explanation: explanation || '',
+                    cg_id: cg_id ? parseInt(cg_id) : null,
                     choices: {
                         create: choices.map((text, index) => ({
                             choice_text: text,
@@ -201,7 +222,7 @@ export default function (prisma) {
     router.put('/question/update/:id', async (req, res) => {
         try {
             const qid = parseInt(req.params.id);
-            const { question, choices, correctIndex, level, explanation } = req.body;
+            const { question, choices, correctIndex, level, explanation, cg_id } = req.body;
 
             // 1. อัปเดตตัวคำถามหลัก
             await prisma.questions.update({
@@ -209,7 +230,8 @@ export default function (prisma) {
                 data: {
                     question: question,
                     level: level,
-                    explanation: explanation
+                    explanation: explanation,
+                    cg_id: cg_id ? parseInt(cg_id) : null
                 }
             });
 

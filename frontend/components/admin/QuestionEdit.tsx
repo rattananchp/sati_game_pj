@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { QuestionFormData, QuestionDetail } from './types';
+import { QuestionFormData, QuestionDetail, Category } from './types';
 
 interface QuestionEditProps {
     questionId: number;
@@ -11,15 +11,25 @@ interface QuestionEditProps {
 export default function QuestionEdit({ questionId, API_URL, onClose, onRefresh }: QuestionEditProps) {
     const [formData, setFormData] = useState<QuestionFormData>({
         question: '', choice1: '', choice2: '', choice3: '', choice4: '',
-        correctIndex: 0, level: 'hard', explanation: ''
+        correctIndex: 0, level: 'hard', explanation: '', cg_id: ''
     });
     const [loadingEdit, setLoadingEdit] = useState(true);
+    const [categories, setCategories] = useState<Category[]>([]);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const res = await fetch(`${API_URL}/admin/question-detail/${questionId}`);
                 const json = await res.json();
+
+                // Fetch categories
+                const catRes = await fetch(`${API_URL}/admin/categories`);
+                let catData = { categories: [] };
+                if (catRes.ok) {
+                    catData = await catRes.json();
+                    setCategories(catData.categories || []);
+                }
+
                 if (res.ok) {
                     setFormData({
                         question: json.question,
@@ -28,8 +38,9 @@ export default function QuestionEdit({ questionId, API_URL, onClose, onRefresh }
                         choice3: json.breakdown[2]?.choice_text || '',
                         choice4: json.breakdown[3]?.choice_text || '',
                         correctIndex: json.breakdown.findIndex((c: QuestionDetail) => c.is_correct),
-                        level: 'hard', // API Might need update to return level
-                        explanation: ''
+                        level: json.level || 'hard',
+                        explanation: json.explanation || '',
+                        cg_id: json.cg_id || ''
                     });
                 }
             } catch (e) { console.error(e); } finally { setLoadingEdit(false); }
@@ -49,7 +60,8 @@ export default function QuestionEdit({ questionId, API_URL, onClose, onRefresh }
                 choices: [formData.choice1, formData.choice2, formData.choice3, formData.choice4],
                 correctIndex: formData.correctIndex,
                 level: formData.level,
-                explanation: formData.explanation
+                explanation: formData.explanation,
+                cg_id: formData.cg_id === '' ? null : Number(formData.cg_id)
             };
             const res = await fetch(`${API_URL}/admin/question/update/${questionId}`, {
                 method: 'PUT',
@@ -100,6 +112,64 @@ export default function QuestionEdit({ questionId, API_URL, onClose, onRefresh }
                     <div>
                         <label className="text-xs text-gray-400 font-bold uppercase mb-2 block tracking-wider">คำถาม</label>
                         <input type="text" name="question" value={formData.question} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-white focus:border-indigo-500 outline-none text-lg transition-colors focus:bg-black/60 shadow-inner" placeholder="พิมพ์คำถามที่นี่..." />
+                    </div>
+
+                    {/* Level and Category Selectors Row */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Level Selector */}
+                        <div>
+                            <label className="text-xs text-gray-400 font-bold uppercase mb-3 block tracking-wider flex items-center gap-2">
+                                <span>⚡</span> ระดับความยาก
+                            </label>
+                            <div className="relative">
+                                <select
+                                    name="level"
+                                    value={formData.level}
+                                    onChange={(e) => handleChange(e as any)}
+                                    className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-white focus:border-indigo-500 max-h-48 outline-none text-lg transition-all focus:bg-black/60 shadow-inner appearance-none pr-10 hover:border-white/20 cursor-pointer"
+                                >
+                                    <option value="easy" className="bg-slate-900 text-green-400">🌱 Easy</option>
+                                    <option value="medium" className="bg-slate-900 text-yellow-400">⚡ Medium</option>
+                                    <option value="hard" className="bg-slate-900 text-red-500">🔥 Hard</option>
+                                </select>
+                                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Category Selector */}
+                        <div>
+                            <label className="text-xs text-gray-400 font-bold uppercase mb-3 block tracking-wider flex items-center gap-2">
+                                <span>📁</span> หมวดหมู่คำถาม
+                            </label>
+                            <div className="relative">
+                                <select
+                                    name="cg_id"
+                                    value={formData.cg_id}
+                                    onChange={(e) => handleChange(e as any)}
+                                    className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-white max-h-48 focus:border-indigo-500 outline-none text-lg transition-all focus:bg-black/60 shadow-inner appearance-none pr-10 hover:border-white/20 cursor-pointer"
+                                >
+                                    <option value="" className="bg-slate-900 text-gray-300">-- ไม่ระบุหมวดหมู่ --</option>
+                                    {categories.map((cat) => {
+                                        let icon = '📌';
+                                        if (cat.mode_cg.includes('ทั่วไป')) icon = '🌍';
+                                        else if (cat.mode_cg.includes('สแกม')) icon = '🕵️‍♂️';
+                                        else if (cat.mode_cg.includes('ไอที')) icon = '💻';
+                                        else if (cat.mode_cg.includes('กฎหมาย') || cat.mode_cg.includes('ไซเบอร์')) icon = '⚖️';
+
+                                        return (
+                                            <option key={cat.cg_id} value={cat.cg_id} className="bg-slate-900 text-gray-200 py-2">
+                                                {icon} {cat.mode_cg}
+                                            </option>
+                                        );
+                                    })}
+                                </select>
+                                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div>

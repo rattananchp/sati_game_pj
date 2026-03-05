@@ -1,5 +1,5 @@
-import { ChangeEvent, useState } from 'react';
-import { QuestionFormData } from './types';
+import { ChangeEvent, useState, useEffect } from 'react';
+import { QuestionFormData, Category } from './types';
 
 interface QuestionAddProps {
     API_URL: string;
@@ -8,10 +8,24 @@ interface QuestionAddProps {
 export default function QuestionAdd({ API_URL }: QuestionAddProps) {
     const initialQuestion: QuestionFormData = {
         question: '', choice1: '', choice2: '', choice3: '', choice4: '',
-        correctIndex: 0, level: 'hard', explanation: ''
+        correctIndex: 0, level: 'hard', explanation: '', cg_id: ''
     };
     const [questions, setQuestions] = useState<QuestionFormData[]>([initialQuestion]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [categories, setCategories] = useState<Category[]>([]);
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const res = await fetch(`${API_URL}/admin/categories`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setCategories(data.categories || []);
+                }
+            } catch (err) { console.error("Failed to load categories", err); }
+        };
+        fetchCategories();
+    }, [API_URL]);
 
     // Update specific question field
     const handleQuestionChange = (index: number, field: string, value: any) => {
@@ -56,7 +70,8 @@ export default function QuestionAdd({ API_URL }: QuestionAddProps) {
                     choices: [q.choice1, q.choice2, q.choice3, q.choice4].filter(c => c !== ''),
                     correctIndex: q.correctIndex,
                     level: q.level,
-                    explanation: q.explanation
+                    explanation: q.explanation,
+                    cg_id: q.cg_id === '' ? null : Number(q.cg_id)
                 };
 
                 const res = await fetch(`${API_URL}/admin/question/add`, {
@@ -122,24 +137,59 @@ export default function QuestionAdd({ API_URL }: QuestionAddProps) {
                         </div>
 
                         <div className="space-y-6 relative z-10">
-                            {/* Level Selector */}
-                            <div>
-                                <label className="block text-xs text-gray-400 uppercase font-bold mb-3 tracking-wider">ระดับความยาก</label>
-                                <div className="flex gap-4">
-                                    {['easy', 'medium', 'hard'].map((lvl) => (
-                                        <label key={lvl} className={`flex-1 cursor-pointer border rounded-xl p-3 text-center uppercase text-sm font-bold transition-all transform hover:scale-[1.02] active:scale-95 ${formData.level === lvl ? (lvl === 'hard' ? 'bg-red-500/20 border-red-500 text-red-400 shadow-lg shadow-red-900/20' : lvl === 'medium' ? 'bg-yellow-500/20 border-yellow-500 text-yellow-400 shadow-lg shadow-yellow-900/20' : 'bg-green-500/20 border-green-500 text-green-400 shadow-lg shadow-green-900/20') : 'bg-black/20 border-white/10 text-gray-500 hover:bg-white/5'}`}>
-                                            <input
-                                                type="radio"
-                                                name={`level-${index}`}
-                                                value={lvl}
-                                                checked={formData.level === lvl}
-                                                onChange={(e) => handleQuestionChange(index, 'level', e.target.value)}
-                                                className="hidden"
-                                            />
-                                            <span className="text-xl block mb-1">{lvl === 'hard' ? '🔥' : lvl === 'medium' ? '⚡' : '🌱'}</span>
-                                            {lvl}
-                                        </label>
-                                    ))}
+                            {/* Level and Category Selectors Row */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Level Selector */}
+                                <div>
+                                    <label className="block text-xs text-gray-400 uppercase font-bold mb-3 tracking-wider flex items-center gap-2">
+                                        <span>⚡</span> ระดับความยาก
+                                    </label>
+                                    <div className="relative">
+                                        <select
+                                            value={formData.level}
+                                            onChange={(e) => handleQuestionChange(index, 'level', e.target.value)}
+                                            className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-white focus:border-indigo-500 max-h-48 outline-none text-lg transition-all focus:bg-black/60 shadow-inner appearance-none pr-10 hover:border-white/20 cursor-pointer"
+                                        >
+                                            <option value="easy" className="bg-slate-900 text-green-400">🌱 Easy</option>
+                                            <option value="medium" className="bg-slate-900 text-yellow-400">⚡ Medium</option>
+                                            <option value="hard" className="bg-slate-900 text-red-500">🔥 Hard</option>
+                                        </select>
+                                        <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400">
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Category Selector */}
+                                <div>
+                                    <label className="block text-xs text-gray-400 uppercase font-bold mb-3 tracking-wider flex items-center gap-2">
+                                        <span>📁</span> หมวดหมู่คำถาม
+                                    </label>
+                                    <div className="relative">
+                                        <select
+                                            value={formData.cg_id}
+                                            onChange={(e) => handleQuestionChange(index, 'cg_id', e.target.value)}
+                                            className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-white focus:border-indigo-500 max-h-48 outline-none text-lg transition-all focus:bg-black/60 shadow-inner appearance-none pr-10 hover:border-white/20 cursor-pointer"
+                                        >
+                                            <option value="" className="bg-slate-900 text-gray-300">-- ไม่ระบุหมวดหมู่ --</option>
+                                            {categories.map((cat) => {
+                                                let icon = '📌';
+                                                if (cat.mode_cg.includes('ทั่วไป')) icon = '🌍';
+                                                else if (cat.mode_cg.includes('สแกม')) icon = '🕵️‍♂️';
+                                                else if (cat.mode_cg.includes('ไอที')) icon = '💻';
+                                                else if (cat.mode_cg.includes('กฎหมาย') || cat.mode_cg.includes('ไซเบอร์')) icon = '⚖️';
+
+                                                return (
+                                                    <option key={cat.cg_id} value={cat.cg_id} className="bg-slate-900 text-gray-200 py-2">
+                                                        {icon} {cat.mode_cg}
+                                                    </option>
+                                                );
+                                            })}
+                                        </select>
+                                        <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400">
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 

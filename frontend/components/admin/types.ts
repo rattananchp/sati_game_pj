@@ -3,7 +3,7 @@ export interface Overview {
     totalUsers: number;
     totalGames: number;
     totalVirusGames: number;
-    
+
 }
 // 1. สร้าง Type สำหรับตัวเลือก (Choice) ก่อน
 export interface Choice {
@@ -32,6 +32,7 @@ export interface QuestionStats {
     qid: number;
     question: string;
     level: string;
+    category?: string;
     correctRate: number;
     totalAttempts: number;
 }
@@ -47,6 +48,11 @@ export interface DashboardData {
     overview: Overview;
 }
 
+export interface Category {
+    cg_id: number;
+    mode_cg: string;
+}
+
 export interface QuestionFormData {
     question: string;
     choice1: string;
@@ -56,6 +62,7 @@ export interface QuestionFormData {
     correctIndex: number;
     level: string;
     explanation: string;
+    cg_id: number | '';
     [key: string]: string | number;
 }
 
