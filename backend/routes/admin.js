@@ -18,12 +18,19 @@ export default function (prisma) {
     router.get('/stats', async (req, res) => {
         try {
             const totalUsers = await prisma.user.count({ where: { role: 'user' } });
-            const totalGames = await prisma.game.count(); // ✅ นับจากตารางประวัติการเล่น (Game) แทน Leaderboard
+            const totalGames = await prisma.game.count({
+                where: {
+                    user: { role: { not: 'admin' } }
+                }
+            }); // ✅ นับจากตารางประวัติการเล่น (Game) แทน Leaderboard เเละไม่นับ Admin
 
-            // ✅ แก้ไข: นับยอดรวมการเล่น Virus จาก play_count ของทุกคนรวมกัน
+            // ✅ แก้ไข: นับยอดรวมการเล่น Virus จาก play_count ของทุกคนรวมกัน (ไม่นับ Admin)
             const virusAgg = await prisma.gameScore.aggregate({
                 _sum: { play_count: true },
-                where: { game_type: 'virus' }
+                where: {
+                    game_type: 'virus',
+                    user: { role: { not: 'admin' } }
+                }
             });
             const totalVirusGames = virusAgg._sum.play_count || 0;
 
@@ -62,6 +69,9 @@ export default function (prisma) {
                 include: {
                     category: { select: { mode_cg: true } },
                     answerLogs: {
+                        where: {
+                            user: { role: { not: 'admin' } }
+                        },
                         select: { is_correct: true }
                     }
                 }
@@ -121,13 +131,19 @@ export default function (prisma) {
 
             // 2. นับคนตอบทั้งหมดของข้อนี้
             const totalAttempts = await prisma.answerLogs.count({
-                where: { qid: qid }
+                where: {
+                    qid: qid,
+                    user: { role: { not: 'admin' } }
+                }
             });
 
             // 3. วนลูปนับแต่ละช้อยส์
             const breakdown = await Promise.all(question.choices.map(async (choice) => {
                 const count = await prisma.answerLogs.count({
-                    where: { cid: choice.cid }
+                    where: {
+                        cid: choice.cid,
+                        user: { role: { not: 'admin' } }
+                    }
                 });
 
                 const percent = totalAttempts === 0 ? 0 : (count / totalAttempts) * 100;
@@ -274,7 +290,12 @@ export default function (prisma) {
 
             // 1. ดึงข้อมูลทั้งหมดของโหมด Virus (เรียงคะแนนมากสุด)
             const allScores = await prisma.gameScore.findMany({
-                where: { game_type: 'virus' },
+                where: {
+                    game_type: 'virus',
+                    user: {
+                        role: { not: 'admin' } // 🛡️ ไม่เอาคะแนนของ Admin ขึ้น Leaderboard
+                    }
+                },
                 include: {
                     user: {
                         select: { username: true, email: true }
