@@ -38,6 +38,11 @@ interface UserData {
     username: string;
 }
 
+// --- Icons ---
+const BackArrowIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+);
+
 // --- Config ---
 const GAME_CONFIG: Record<string, { time: number; score: number; color: string }> = {
     easy: { time: 20, score: 20, color: 'text-green-400' },
@@ -85,6 +90,9 @@ function QuizContent() {
     const [earnedPoints, setEarnedPoints] = useState(0);
     const [isBonus, setIsBonus] = useState(false);
     const [isTimeOut, setIsTimeOut] = useState(false);
+    
+    // ✅ State สำหรับ Popup แจ้งเตือนการออก
+    const [showExitPopup, setShowExitPopup] = useState(false);
 
     // --- Refs ---
     const startTimeRef = useRef<number>(0);
@@ -100,10 +108,9 @@ function QuizContent() {
 
         const fetchQuestions = async () => {
             try {
-                const userObj = JSON.parse(userStr); // Parse directly to ensure availability
+                const userObj = JSON.parse(userStr);
                 const userId = userObj.uid || userObj.id;
 
-                // ✅ Auto-detect Environment
                 let apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
                 if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
                     apiUrl = 'http://localhost:4000';
@@ -126,7 +133,6 @@ function QuizContent() {
                     setQuestions(shuffledQuestions);
                     setGameState('playing');
 
-                    // ✅ เริ่มจับเวลาทั้งเกม
                     startTimeRef.current = Date.now();
 
                     setTimeout(() => setIsTimerRunning(true), 0);
@@ -146,21 +152,6 @@ function QuizContent() {
     }, [diff, router]);
 
 
-    useEffect(() => {
-        const userStr = localStorage.getItem('user');
-        if (!userStr) { router.push('/login'); return; }
-
-        setTimeout(() => {
-            setCurrentUser(JSON.parse(userStr));
-        }, 0);
-
-        // ... (โค้ด fetchQuestions เดิม) ...
-    }, [diff, router]);
-
-
-
-
-
     const handleTimeOut = useCallback(() => {
         setIsTimerRunning(false);
         setIsCorrect(false);
@@ -170,12 +161,10 @@ function QuizContent() {
         setEarnedPoints(0);
     }, []);
 
-    // ✅ แก้ไขเป็นแบบนี้
     const toggleMute = () => {
         const newMutedStatus = !isMuted;
         setIsMuted(newMutedStatus);
 
-        // สั่งงาน Audio ตัวกลาง (Global)
         const globalAudio = document.getElementById('global-bgm') as HTMLAudioElement;
         if (globalAudio) {
             globalAudio.muted = newMutedStatus;
@@ -186,27 +175,24 @@ function QuizContent() {
 
     // --- Timer ---
     useEffect(() => {
-        if (!isTimerRunning) return;
+        // 🛑 หยุดเวลาถ้าโชว์ Popup อยู่
+        if (!isTimerRunning || showExitPopup) return;
         if (timeLeft <= 0) {
             const timeoutId = setTimeout(() => handleTimeOut(), 0);
             return () => clearTimeout(timeoutId);
         }
         const timer = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
         return () => clearInterval(timer);
-    }, [timeLeft, isTimerRunning, handleTimeOut]);
+    }, [timeLeft, isTimerRunning, handleTimeOut, showExitPopup]);
 
     const finishGame = async () => {
         setGameState('finished');
         playSound('correct');
 
-        // ✅ 4. ใช้โค้ดชุดนี้แทนอันเดิม (เพื่อส่ง logs ไปด้วย)
         if (currentUser) {
             try {
-                // คำนวณเวลาที่เล่นไปทั้งหมด (วินาที)
                 const totalTimeTaken = Math.floor((Date.now() - startTimeRef.current) / 1000);
 
-                // const apiUrl = 'http://localhost:4000';
-                // ✅ Auto-detect Environment
                 let apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
                 if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
                     apiUrl = 'http://localhost:4000';
@@ -216,7 +202,6 @@ function QuizContent() {
 
                 if (!userIdToSend) return;
 
-                // ยิงไปที่ /submit-score (ตัวใหม่ที่เราเพิ่งทำ)
                 await fetch(`${apiUrl}/submit-score`, {
                     method: 'POST',
                     headers: {
@@ -228,8 +213,8 @@ function QuizContent() {
                         score: score,
                         gameType: 'quiz',
                         difficulty: diff,
-                        timeTaken: totalTimeTaken, // ✅ ส่งเวลารวมทั้งหมดไป
-                        logs: answerLogs // ⭐ สำคัญมาก! ส่งประวัติการตอบไปด้วย
+                        timeTaken: totalTimeTaken,
+                        logs: answerLogs
                     })
                 });
                 console.log("✅ Full Game Data Saved!");
@@ -253,7 +238,8 @@ function QuizContent() {
     };
 
     const handleAnswer = (choice: Choice) => {
-        if (showFeedback) return;
+        // 🛑 ห้ามตอบถ้าโชว์ Popup อยู่
+        if (showFeedback || showExitPopup) return;
         setIsTimerRunning(false);
         setSelectedChoiceId(choice.cid);
 
@@ -294,7 +280,7 @@ function QuizContent() {
         </div>
     );
 
-    // --- RENDER: Finished (Updated: No Leaderboard, All Thai) ---
+    // --- RENDER: Finished ---
     if (gameState === 'finished') {
         const totalPossibleScore = questions.length * (config.score + 10);
         const scorePercentage = totalPossibleScore > 0 ? (score / totalPossibleScore) * 100 : 0;
@@ -303,8 +289,6 @@ function QuizContent() {
 
         return (
             <main className="relative min-h-screen w-screen bg-slate-950 font-sans flex flex-col items-center justify-center p-4 overflow-y-auto">
-
-                {/* พื้นหลัง */}
                 <div className="absolute inset-0 z-0 overflow-hidden bg-slate-950 pointer-events-none">
                     <div className="absolute inset-0 z-0 w-[200%] h-full animate-scroll-bg opacity-40">
                         <div className="w-1/2 h-full bg-cover bg-center grayscale-[50%] bg-[url('/images/bg1.png')]"></div>
@@ -315,14 +299,12 @@ function QuizContent() {
                     <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse-slow delay-1000 mix-blend-screen z-20"></div>
                 </div>
 
-                {/* Content Card */}
                 <div className="relative z-10 w-full max-w-lg bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] p-6 md:p-8 text-center shadow-[0_0_80px_rgba(0,0,0,0.5)] animate-fade-in flex flex-col gap-6">
 
                     <h1 className="text-2xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 uppercase tracking-widest drop-shadow-lg">
                         สรุปผลการทดสอบ
                     </h1>
 
-                    {/* Personal Result Only */}
                     <div className="flex flex-col gap-4">
                         <div className={`bg-slate-900 rounded-3xl p-6 border-4 ${myRank.border} relative overflow-hidden shadow-2xl flex flex-col justify-center items-center min-h-[250px]`}>
                             <div className={`absolute inset-0 bg-gradient-to-br ${myRank.bg} to-transparent opacity-20`}></div>
@@ -339,7 +321,6 @@ function QuizContent() {
                             </div>
                         </div>
 
-                        {/* Mini Stats Grid */}
                         <div className="grid grid-cols-2 gap-3">
                             <div className="bg-slate-800 p-3 rounded-2xl border border-white/5 flex flex-col items-center justify-center">
                                 <span className="text-xs text-gray-400 uppercase font-bold">ตอบถูก</span>
@@ -352,7 +333,6 @@ function QuizContent() {
                         </div>
                     </div>
 
-                    {/* Bottom Buttons */}
                     <div className="flex flex-col sm:flex-row gap-3 justify-center mt-2">
                         <button onClick={() => window.location.reload()} className="w-full sm:w-auto px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-white font-bold uppercase tracking-widest hover:bg-white/10 transition-all shadow-lg active:scale-95 text-sm">
                             🔄 เล่นอีกครั้ง
@@ -392,12 +372,17 @@ function QuizContent() {
             <div className="relative z-10 w-full max-w-4xl bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-4 md:p-8 shadow-[0_0_60px_rgba(0,0,0,0.4)] flex flex-col gap-4 md:gap-6 mt-4 md:mt-0">
                 {/* Header */}
                 <div className="flex items-center gap-2 md:gap-4 w-full">
+                    
+                    {/* ✨ ปุ่มกดย้อนกลับ เรียก Popup ✨ */}
                     <button
-                        onClick={() => router.push('/')}
-                        className="h-10 w-10 md:h-12 md:w-auto md:px-4 rounded-xl bg-white/5 border border-white/10 hover:bg-red-500/20 hover:border-red-500/50 transition-all flex items-center justify-center gap-2 active:scale-95 shrink-0"
+                        onClick={() => {
+                            playSound('click');
+                            setShowExitPopup(true);
+                        }}
+                        className="h-10 w-10 md:h-12 md:w-12 rounded-full bg-white/5 border border-white/10 hover:bg-white/20 transition-all flex items-center justify-center text-gray-400 hover:text-white active:scale-95 shrink-0"
+                        title="ออกจากการทดสอบ"
                     >
-                        <span className="text-lg md:text-xl text-gray-400">✕</span>
-                        <span className="hidden md:inline-block text-xs font-bold text-gray-400 uppercase tracking-widest">ออก</span>
+                        <BackArrowIcon />
                     </button>
 
                     <div className="flex-1 h-10 md:h-12 bg-black/40 rounded-xl overflow-hidden border border-white/10 relative shadow-inner flex items-center px-3 md:px-4">
@@ -442,7 +427,7 @@ function QuizContent() {
                         }
                         return (
                             <button
-                                key={choice.cid} disabled={showFeedback} onClick={() => handleAnswer(choice)}
+                                key={choice.cid} disabled={showFeedback || showExitPopup} onClick={() => handleAnswer(choice)}
                                 className={`relative overflow-hidden p-3 md:p-4 rounded-2xl border-2 text-base md:text-lg font-bold transition-all duration-300 transform active:scale-[0.98] group ${btnColorClass}`}
                             >
                                 <div className="relative z-10 flex items-center gap-3 md:gap-4">
@@ -460,7 +445,7 @@ function QuizContent() {
             </div>
 
             {/* FEEDBACK POPUP */}
-            {showFeedback && (
+            {showFeedback && !showExitPopup && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300"></div>
                     <div className={`relative w-full max-w-[320px] md:max-w-sm rounded-[2rem] overflow-hidden shadow-2xl transform transition-all animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 border border-white/10 ${isCorrect ? 'bg-gradient-to-b from-green-900/90 to-slate-900/95 shadow-[0_0_50px_-12px_rgba(34,197,94,0.5)]' : (isTimeOut ? 'bg-gradient-to-b from-orange-900/90 to-slate-900/95 shadow-[0_0_50px_-12px_rgba(249,115,22,0.5)]' : 'bg-gradient-to-b from-red-900/90 to-slate-900/95 shadow-[0_0_50px_-12px_rgba(239,68,68,0.5)]')}`}>
@@ -476,6 +461,40 @@ function QuizContent() {
                                 <p className="text-gray-300 text-xs md:text-sm font-medium leading-relaxed">{currentQuestion.explanation || "ไม่มีคำอธิบายเพิ่มเติมสำหรับข้อนี้"}</p>
                             </div>
                             <button onClick={nextQuestion} className={`w-full py-3 md:py-4 rounded-xl font-bold text-base md:text-lg text-white shadow-lg tracking-widest uppercase transform transition-all duration-200 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3 ${isCorrect ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:shadow-green-500/50' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:shadow-blue-500/50'}`}><span>{currentQIndex < questions.length - 1 ? 'ข้อต่อไป' : 'ดูสรุปผล'}</span><svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg></button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ✨ EXIT CONFIRMATION POPUP ✨ */}
+            {showExitPopup && (
+                <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-950/60 backdrop-blur-sm px-4 animate-fade-in">
+                    <div className="bg-slate-800/90 backdrop-blur-xl border border-white/10 p-6 md:p-8 rounded-3xl shadow-2xl max-w-[320px] w-full text-center relative overflow-hidden">
+
+                        <div className="text-5xl mb-3 drop-shadow-md">
+                            🚪
+                        </div>
+
+                        <h3 className="text-xl font-bold text-white mb-2">
+                            ต้องการกลับหน้าหลัก?
+                        </h3>
+                        <p className="text-gray-300 text-sm mb-6 leading-relaxed">
+                            ถ้าออกตอนนี้ คะแนนของรอบนี้<br />จะไม่ถูกบันทึกนะ แน่ใจไหม?
+                        </p>
+
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            <button
+                                onClick={() => { playSound('click'); setShowExitPopup(false); }}
+                                className="flex-1 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-white font-bold transition-all active:scale-95 text-sm"
+                            >
+                                เล่นต่อ
+                            </button>
+                            <button
+                                onClick={() => { playSound('click'); router.push('/'); }}
+                                className="flex-1 py-3.5 rounded-xl bg-blue-500 hover:bg-blue-400 text-white font-bold shadow-lg shadow-blue-500/30 transition-all active:scale-95 text-sm"
+                            >
+                                ยืนยันการออก
+                            </button>
                         </div>
                     </div>
                 </div>

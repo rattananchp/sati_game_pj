@@ -9,6 +9,11 @@ type GameState = 'tutorial' | 'playing' | 'gameover';
 const GRID_SIZE = 16;
 const GRID_COLS = 'grid-cols-4';
 
+// ✅ เพิ่ม Component ไอคอนลูกศรย้อนกลับ
+const BackArrowIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+);
+
 export default function VirusPage() {
     const router = useRouter();
 
@@ -39,10 +44,9 @@ export default function VirusPage() {
     const loopRef = useRef<NodeJS.Timeout | null>(null);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
     const bossTimerRef = useRef<number>(0);
-    const survivalTimeRef = useRef<number>(0); // ✅ เก็บค่าเวลาล่าสุดเสมอ
+    const survivalTimeRef = useRef<number>(0); 
     const showExitPopupRef = useRef<boolean>(false);
 
-    // ✅ อัปเดตสถานะ Pause เข้า Ref เพื่อให้ตัวตั้งเวลา (Timeout) รู้ว่าเกมหยุดอยู่
     useEffect(() => {
         showExitPopupRef.current = showExitPopup;
     }, [showExitPopup]);
@@ -54,7 +58,7 @@ export default function VirusPage() {
         return `${m}:${s}`;
     };
 
-    // ✅ SAVE SCORE
+    // SAVE SCORE
     const saveScore = async (finalScore: number) => {
         const userStr = localStorage.getItem('user');
         if (!userStr) return;
@@ -64,7 +68,6 @@ export default function VirusPage() {
         if (!userIdToSend) return;
 
         try {
-            // ✅ Auto-detect Environment
             let apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
             if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
                 apiUrl = 'http://localhost:4000';
@@ -81,7 +84,7 @@ export default function VirusPage() {
                     userId: userIdToSend,
                     score: finalScore,
                     gameType: 'virus',
-                    timeTaken: survivalTimeRef.current, // ✅ ใช้ Ref ป้องกัน stale closure
+                    timeTaken: survivalTimeRef.current,
                     logs: []
                 })
             });
@@ -174,7 +177,7 @@ export default function VirusPage() {
         if (view !== 'playing' || isPhase3Warning || showExitPopup) return;
         timerRef.current = setInterval(() => {
             setSurvivalTime(t => {
-                survivalTimeRef.current = t + 1; // ✅ Sync Ref ทุกวินาที
+                survivalTimeRef.current = t + 1; 
                 return t + 1;
             });
         }, 1000);
@@ -247,10 +250,8 @@ export default function VirusPage() {
 
                 newGrid[randIdx] = type;
 
-                // ✅ ฟังก์ชันตั้งเวลาหายไป (รองรับการ Pause)
                 const scheduleDisappear = (targetIdx: number, targetType: CellState, delay: number) => {
                     setTimeout(() => {
-                        // 🛑 ถ้าเกม Pause อยู่ ให้เลื่อนการหายตัวไปอีก 0.5 วินาที แล้วเช็คใหม่
                         if (showExitPopupRef.current) {
                             scheduleDisappear(targetIdx, targetType, 500);
                             return;
@@ -264,11 +265,11 @@ export default function VirusPage() {
                                 nextGrid[targetIdx] = 'empty';
 
                                 if (targetType === 'virus') {
-                                    setHp(h => Math.max(0, h - 20)); // ลดเลือด 20
+                                    setHp(h => Math.max(0, h - 20));
                                 } else if (targetType === 'boss') {
                                     triggerShake();
                                     playSound('wrong');
-                                    setHp(0); // Game Over
+                                    setHp(0); 
                                 }
                                 return nextGrid;
                             }
@@ -277,7 +278,6 @@ export default function VirusPage() {
                     }, delay);
                 };
 
-                // เรียกใช้ฟังก์ชัน
                 scheduleDisappear(randIdx, type, currentDisappearRate);
 
                 return newGrid;
@@ -340,7 +340,7 @@ export default function VirusPage() {
         setHp(200);
         setScore(0);
         setSurvivalTime(0);
-        survivalTimeRef.current = 0; // ✅ Reset Ref ด้วย
+        survivalTimeRef.current = 0; 
         setBossHp(0);
         bossTimerRef.current = 0;
         setGrid(Array(GRID_SIZE).fill('empty'));
@@ -365,35 +365,26 @@ export default function VirusPage() {
                 <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-900/60 to-slate-950/90 z-10"></div>
             </div>
 
-            {/* ✕ Global Close Button (ซ่อนในหน้า Tutorial เพราะมีปุ่มกลับในกรอบแล้ว) */}
-            {view !== 'tutorial' && (
+            {/* ✕ Global Close Button ถูกคอมเมนต์ออกเพื่อให้ใช้ปุ่มบนซ้ายแบบใหม่แทน */}
+            {/* {view !== 'tutorial' && (
                 <button
-                    onClick={() => {
-                        playSound('click');
-                        if (view === 'playing') {
-                            setShowExitPopup(true);
-                        } else {
-                            router.push('/');
-                        }
-                    }}
-                    className="absolute top-4 left-4 z-50 w-10 h-10 md:w-14 md:h-14 bg-white/10 backdrop-blur-md rounded-full border border-white/20 flex items-center justify-center text-white text-xl hover:bg-red-500/20 hover:border-red-500 transition-all hover:scale-110 cursor-pointer shadow-lg"
+                    onClick={() => { ... }}
                 >
                     ✕
                 </button>
-            )}
+            )} */}
 
             {/* --- 1. TUTORIAL SCREEN --- */}
             {view === 'tutorial' && (
                 <div className="relative z-10 w-full max-w-sm bg-black/60 backdrop-blur-xl border border-white/10 p-8 rounded-[2rem] shadow-2xl text-center animate-fade-in">
 
-                    {/* 🔙 ปุ่มย้อนกลับ (อยู่บนซ้ายในกรอบ) */}
+                    {/* ✨ เปลี่ยนเป็นปุ่มลูกศรวงกลมสไตล์ Profile (บนซ้าย) ✨ */}
                     <button
                         onClick={() => { playSound('click'); router.push('/'); }}
-                        className="absolute top-7 left-6 text-gray-400 font-bold hover:text-white flex justify-center items-center gap-1 transition-all opacity-70 hover:opacity-100 group"
+                        className="absolute top-6 left-6 p-2 rounded-full bg-transparent hover:bg-white/10 text-gray-400 hover:text-white transition-all active:scale-95 z-20"
                         title="กลับหน้าหลัก"
                     >
-                        <span className="text-lg leading-none group-hover:-translate-x-1 transition-transform duration-300">←</span>
-                        <span className="text-xs uppercase tracking-wider">กลับ</span>
+                        <BackArrowIcon />
                     </button>
 
                     <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 mb-6 uppercase tracking-wider mt-4">
@@ -428,24 +419,23 @@ export default function VirusPage() {
                 </div>
             )}
 
-            {/* --- 2. GAMEPLAY SCREEN (THAI UI) --- */}
+            {/* --- 2. GAMEPLAY SCREEN --- */}
             {view === 'playing' && (
                 <div className="relative z-10 w-full max-w-[420px] flex flex-col gap-6 animate-fade-in mt-6">
 
                     {/* Header Score Bar */}
-                    <div className="flex justify-between items-center bg-black/40 p-4 rounded-3xl border border-white/10 backdrop-blur-xl shadow-lg relative">
+                    <div className="flex justify-between items-center bg-black/40 p-4 rounded-3xl border border-white/10 backdrop-blur-xl shadow-lg relative mt-6">
 
-                        {/* 🔙 ปุ่มย้อนกลับ (อยู่ข้างบนเวลา) */}
+                        {/* ✨ เปลี่ยนเป็นปุ่มลูกศรวงกลม ลอยอยู่ด้านซ้ายบนของแถบคะแนน ✨ */}
                         <button
                             onClick={() => {
                                 playSound('click');
                                 setShowExitPopup(true);
                             }}
-                            className="absolute -top-7 left-2 text-gray-400 font-bold hover:text-white flex items-center gap-1 transition-all opacity-70 hover:opacity-100 group"
+                            className="absolute -top-12 left-0 p-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/20 text-gray-400 hover:text-white transition-all active:scale-95 z-20"
                             title="ออกจากการเล่น"
                         >
-                            <span className="text-lg leading-none group-hover:-translate-x-1 transition-transform duration-300">←</span>
-                            <span className="text-xs uppercase tracking-wider">ออก</span>
+                            <BackArrowIcon />
                         </button>
 
                         <div className="text-center min-w-[70px]">
@@ -579,7 +569,6 @@ export default function VirusPage() {
                                 ระบบเสียหายหนักจากการโจมตี
                             </p>
 
-                            {/* ✅ แยก Time & Score */}
                             <div className="flex flex-col gap-3 mb-6">
 
                                 {/* Time Card */}
@@ -632,7 +621,6 @@ export default function VirusPage() {
                 <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-950/60 backdrop-blur-sm px-4 animate-fade-in">
                     <div className="bg-slate-800/90 backdrop-blur-xl border border-white/10 p-6 md:p-8 rounded-3xl shadow-2xl max-w-[320px] w-full text-center relative overflow-hidden">
 
-                        {/* ไอคอนน่ารักๆ ดูเป็นมิตร */}
                         <div className="text-5xl mb-3 drop-shadow-md">
                             🚪
                         </div>
@@ -644,7 +632,6 @@ export default function VirusPage() {
                             ถ้าออกตอนนี้ คะแนนของรอบนี้<br />จะไม่ถูกบันทึกนะ แน่ใจไหม?
                         </p>
 
-                        {/* ปุ่มกด (มือถือจะเรียงแนวตั้ง จอใหญ่หน่อยเรียงแนวนอน) */}
                         <div className="flex flex-col sm:flex-row gap-3">
                             <button
                                 onClick={() => { playSound('click'); setShowExitPopup(false); }}
