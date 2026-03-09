@@ -217,7 +217,7 @@ export default function HomePage() {
       </div>
 
       {/* ==================== 🛠️ Admin Dashboard Button (Bottom Left) ==================== */}
-      {user?.role === 'admin' && (
+      {(user?.role === 'admin' || user?.role === 'editor') && (
         <div className="fixed bottom-6 left-6 z-50 animate-fade-in">
           <button
             onClick={() => {
