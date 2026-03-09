@@ -1,4 +1,6 @@
 import express from 'express';
+import { requireAuth } from '../middleware/auth.js';
+
 const router = express.Router();
 
 export default function (prisma) {
@@ -20,7 +22,7 @@ export default function (prisma) {
             const totalUsers = await prisma.user.count({ where: { role: 'user' } });
             const totalGames = await prisma.game.count({
                 where: {
-                    user: { role: { not: 'admin' } }
+                    user: { role: { notIn: ['admin', 'editor'] } }
                 }
             }); // ✅ นับจากตารางประวัติการเล่น (Game) แทน Leaderboard เเละไม่นับ Admin
 
@@ -29,7 +31,7 @@ export default function (prisma) {
                 _sum: { play_count: true },
                 where: {
                     game_type: 'virus',
-                    user: { role: { not: 'admin' } }
+                    user: { role: { notIn: ['admin', 'editor'] } }
                 }
             });
             const totalVirusGames = virusAgg._sum.play_count || 0;
@@ -70,7 +72,7 @@ export default function (prisma) {
                     category: { select: { mode_cg: true } },
                     answerLogs: {
                         where: {
-                            user: { role: { not: 'admin' } }
+                            user: { role: { notIn: ['admin', 'editor'] } }
                         },
                         select: { is_correct: true }
                     }
@@ -133,7 +135,7 @@ export default function (prisma) {
             const totalAttempts = await prisma.answerLogs.count({
                 where: {
                     qid: qid,
-                    user: { role: { not: 'admin' } }
+                    user: { role: { notIn: ['admin', 'editor'] } }
                 }
             });
 
@@ -142,7 +144,7 @@ export default function (prisma) {
                 const count = await prisma.answerLogs.count({
                     where: {
                         cid: choice.cid,
-                        user: { role: { not: 'admin' } }
+                        user: { role: { notIn: ['admin', 'editor'] } }
                     }
                 });
 
@@ -293,7 +295,7 @@ export default function (prisma) {
                 where: {
                     game_type: 'virus',
                     user: {
-                        role: { not: 'admin' } // 🛡️ ไม่เอาคะแนนของ Admin ขึ้น Leaderboard
+                        role: { notIn: ['admin', 'editor'] } // 🛡️ ไม่เอาคะแนนของ Admin และ Editor ขึ้น Leaderboard
                     }
                 },
                 include: {
@@ -338,8 +340,13 @@ export default function (prisma) {
     });
 
     // ✅ 8. API: ดึงรายชื่อผู้ใช้งานทั้งหมด (User Management)
-    router.get('/users', async (req, res) => {
+    router.get('/users', requireAuth, async (req, res) => {
         try {
+            // Check if user is admin
+            if (req.user.role !== 'admin') {
+                return res.status(403).json({ error: "ไม่มีสิทธิ์เข้าถึง (Admin only)" });
+            }
+
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 10;
             const search = req.query.search || '';
@@ -390,8 +397,12 @@ export default function (prisma) {
     });
 
     // ✅ 9. API: ลบผู้ใช้งาน (User Management)
-    router.delete('/user/:id', async (req, res) => {
+    router.delete('/user/:id', requireAuth, async (req, res) => {
         try {
+            if (req.user.role !== 'admin') {
+                return res.status(403).json({ error: "ไม่มีสิทธิ์ในการลบผู้ใช้งาน" });
+            }
+
             const uid = parseInt(req.params.id);
 
             // ป้องกันการลบตัวเองหรือ Admin (ถ้ามี Logic auth request user)
@@ -406,6 +417,34 @@ export default function (prisma) {
         } catch (err) {
             console.error("Delete User Error:", err);
             res.status(500).json({ error: "ลบผู้ใช้งานไม่สำเร็จ" });
+        }
+    });
+
+    // ✅ 10. API: เปลี่ยน Role ของผู้ใช้งาน
+    router.put('/user/:id/role', requireAuth, async (req, res) => {
+        try {
+            if (req.user.role !== 'admin') {
+                return res.status(403).json({ error: "ไม่มีสิทธิ์ในการเปลี่ยน Role" });
+            }
+
+            const uid = parseInt(req.params.id);
+            const { role } = req.body;
+
+            if (!['admin', 'editor', 'user'].includes(role)) {
+                return res.status(400).json({ error: "Role ไม่ถูกต้อง" });
+            }
+
+            const updatedUser = await prisma.user.update({
+                where: { uid: uid },
+                data: { role: role },
+                select: { uid: true, username: true, role: true }
+            });
+
+            console.log(`✏️ Updated User ID: ${uid} to role: ${role}`);
+            res.json({ success: true, message: "เปลี่ยน Role สำเร็จ", user: updatedUser });
+        } catch (err) {
+            console.error("Update Role Error:", err);
+            res.status(500).json({ error: "เปลี่ยน Role ไม่สำเร็จ" });
         }
     });
 

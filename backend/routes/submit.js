@@ -11,9 +11,9 @@ export default function (prisma) {
         const role = req.user.role;
         const { score, gameType, difficulty, logs, timeTaken } = req.body;
 
-        if (role === 'admin') {
-            console.log(`🛡️ Admin ${uid} is playing. Scores/Logs are NOT counted.`);
-            return res.json({ success: true, message: "Admin score/play ignored" });
+        if (role === 'admin' || role === 'editor') {
+            console.log(`🛡️ ${role} ${uid} is playing. Scores/Logs are NOT counted.`);
+            return res.json({ success: true, message: `${role.charAt(0).toUpperCase() + role.slice(1)} score/play ignored` });
         }
 
         const finalScore = parseInt(score);

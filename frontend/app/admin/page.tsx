@@ -29,6 +29,7 @@ export default function AdminDashboard() {
     const [isAuthorized, setIsAuthorized] = useState(false);
     const [data, setData] = useState<DashboardData | null>(null);
     const [loading, setLoading] = useState(true); // Loading for Auth & Init Data
+    const [userRole, setUserRole] = useState<string>('');
 
     // Shared State for Modals & Actions
     const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -43,10 +44,11 @@ export default function AdminDashboard() {
         if (!userStr) { router.push('/login'); return; }
         try {
             const user = JSON.parse(userStr);
-            if (user.role !== 'admin') {
+            if (user.role !== 'admin' && user.role !== 'editor') {
                 alert("⛔️ คุณไม่มีสิทธิ์เข้าถึงหน้านี้!");
                 router.push('/');
             } else {
+                setUserRole(user.role);
                 setIsAuthorized(true);
                 // Fetch Initial Data
                 fetch(`${API_URL}/admin/stats`)
@@ -122,7 +124,7 @@ export default function AdminDashboard() {
             <div className="absolute inset-0 bg-slate-950/80 pointer-events-none z-0"></div>
 
             <div className="relative z-10 flex h-full w-full">
-                <Sidebar currentView={currentView} setCurrentView={setCurrentView} />
+                <Sidebar currentView={currentView} setCurrentView={setCurrentView} userRole={userRole} />
 
                 <main className="flex-1 overflow-y-auto p-6 md:p-10 relative custom-scrollbar">
                     {/* Background Ambience (Replaced expensive blur with radial gradient) */}
@@ -143,7 +145,7 @@ export default function AdminDashboard() {
 
                     {currentView === 'virus_manage' && <VirusAdmin API_URL={API_URL} />}
 
-                    {currentView === 'users' && <Users API_URL={API_URL} />}
+                    {currentView === 'users' && userRole === 'admin' && <Users API_URL={API_URL} />}
 
                     {currentView === 'add_question' && <QuestionAdd API_URL={API_URL} />}
 

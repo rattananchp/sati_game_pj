@@ -16,7 +16,12 @@ export default function Users({ API_URL }: UsersProps) {
     const fetchUsers = async () => {
         setIsLoading(true);
         try {
-            const res = await fetch(`${API_URL}/admin/users?page=${page}&limit=10&search=${search}`);
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${API_URL}/admin/users?page=${page}&limit=10&search=${search}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
             const json = await res.json();
             if (json.users) {
                 setUsers(json.users);
@@ -44,8 +49,12 @@ export default function Users({ API_URL }: UsersProps) {
         if (!confirm("คุณต้องการลบผู้ใช้งานคนนี้ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้")) return;
 
         try {
+            const token = localStorage.getItem('token');
             const res = await fetch(`${API_URL}/admin/user/${uid}`, {
                 method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
             });
             const data = await res.json();
 
@@ -57,6 +66,33 @@ export default function Users({ API_URL }: UsersProps) {
             }
         } catch (err) {
             console.error("Delete error:", err);
+            alert("เชื่อมต่อ Server ไม่ได้");
+        }
+    };
+
+    const handleRoleChange = async (uid: number, newRole: string) => {
+        if (!confirm(`คุณต้องการเปลี่ยนสิทธิ์ผู้ใช้นี้เป็น ${newRole} ใช่หรือไม่?`)) return;
+
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${API_URL}/admin/user/${uid}/role`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ role: newRole })
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                alert("เปลี่ยนสิทธิ์เรียบร้อยแล้ว");
+                fetchUsers();
+            } else {
+                alert(data.error || "เปลี่ยนสิทธิ์ไม่สำเร็จ");
+            }
+        } catch (err) {
+            console.error("Update role error:", err);
             alert("เชื่อมต่อ Server ไม่ได้");
         }
     };
@@ -140,11 +176,20 @@ export default function Users({ API_URL }: UsersProps) {
                                         </div>
                                     </td>
                                     <td className="p-5 text-center">
-                                        <span className={`px-4 py-1.5 rounded-lg text-[10px] font-black tracking-widest uppercase border ${u.role === 'admin' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30' :
-                                            'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.1)]'
-                                            }`}>
-                                            {u.role === 'admin' ? 'Admin' : 'Player'}
-                                        </span>
+                                        <select
+                                            value={u.role}
+                                            onChange={(e) => handleRoleChange(u.uid, e.target.value)}
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold tracking-wide border cursor-pointer focus:outline-none text-center appearance-none ${u.role === 'admin'
+                                                    ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30'
+                                                    : u.role === 'editor'
+                                                        ? 'bg-blue-500/10 text-blue-400 border-blue-500/30 shadow-[0_0_10px_rgba(59,130,246,0.1)]'
+                                                        : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.1)]'
+                                                }`}
+                                        >
+                                            <option className="bg-slate-800 text-emerald-400 font-bold" value="user">Player</option>
+                                            <option className="bg-slate-800 text-blue-400 font-bold" value="editor">Editor</option>
+                                            <option className="bg-slate-800 text-indigo-400 font-bold" value="admin">Admin</option>
+                                        </select>
                                     </td>
                                     <td className="p-5 text-center">
                                         <div className="flex items-center justify-center gap-2 transition-opacity">
