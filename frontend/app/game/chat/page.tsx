@@ -32,19 +32,14 @@ const categoryMeta = [
     }
 ];
 
-// ==========================================
-// ส่วนพื้นหลังภาพเลื่อน (เหมือนหน้าเล่นเกม)
-// ==========================================
+// พื้นหลังภาพเลื่อน
 const AnimatedBackground = () => (
     <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none bg-slate-950">
-        {/* รูปภาพเลื่อน */}
         <div className="absolute inset-0 z-0 w-[200%] h-full animate-scroll-bg opacity-30">
             <div className="w-1/2 h-full bg-cover bg-center grayscale-[70%] opacity-60 bg-[url('/images/bg1.png')]"></div>
             <div className="w-1/2 h-full bg-cover bg-center grayscale-[70%] opacity-60 bg-[url('/images/bg1.png')]"></div>
         </div>
-        {/* Overlay สีดำไล่ระดับ */}
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950/90 via-slate-900/80 to-slate-950/95 z-10"></div>
-        {/* Effect แสงไฟวงกลม */}
         <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-purple-600/20 blur-[120px] animate-pulse-slow mix-blend-screen z-20"></div>
         <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse-slow delay-1000 mix-blend-screen z-20"></div>
     </div>
@@ -54,6 +49,9 @@ export default function ChatMenuPage() {
     const router = useRouter();
     const [progress, setProgress] = useState<Record<string, number>>({});
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+    
+    // ✅ เพิ่ม State สำหรับควบคุม Popup ด่านล็อค
+    const [showLockedPopup, setShowLockedPopup] = useState(false);
 
     useEffect(() => {
         const savedProgress = JSON.parse(localStorage.getItem('sati_chat_progress') || '{}');
@@ -71,7 +69,8 @@ export default function ChatMenuPage() {
     const handleSelectChat = (id: string, isLocked: boolean) => {
         if (isLocked) {
             playSound('wrong');
-            alert("🔒 คุณต้องผ่านด่านก่อนหน้าในหมวดหมู่นี้ก่อน!");
+            // ✅ เปลี่ยนจากการใช้ alert() เป็นการเปิด Popup แทน
+            setShowLockedPopup(true);
             return;
         }
         playSound('click');
@@ -93,7 +92,6 @@ export default function ChatMenuPage() {
     return (
         <div className="relative min-h-screen w-full flex justify-center items-center bg-slate-950 overflow-hidden font-sans">
             
-            {/* ✨ เรียกใช้พื้นหลังแบบภาพเลื่อน ✨ */}
             <AnimatedBackground />
 
             {/* 📱 Phone Frame */}
@@ -113,9 +111,6 @@ export default function ChatMenuPage() {
                 {/* พื้นที่แสดงผล */}
                 <div className="flex-1 overflow-y-auto p-4 [&::-webkit-scrollbar]:hidden bg-[#0B1120]/90 pb-10 relative">
                     
-                    {/* ========================================================
-                        หน้าจอ 1: เลือกหมวดหมู่ (Category Selection)
-                        ======================================================== */}
                     {!selectedCategory && (
                         <div className="space-y-4 animate-fade-in">
                             <p className="text-gray-400 text-xs mb-2 pl-1 font-medium">เลือกรูปแบบภัยไซเบอร์เพื่อฝึกรับมือ</p>
@@ -156,9 +151,6 @@ export default function ChatMenuPage() {
                         </div>
                     )}
 
-                    {/* ========================================================
-                        หน้าจอ 2: เลือกด่าน (Level Selection)
-                        ======================================================== */}
                     {selectedCategory && (
                         <div className="space-y-2 animate-fade-in-up">
                             {currentCategoryChats.map((chat) => {
@@ -203,9 +195,35 @@ export default function ChatMenuPage() {
                             })}
                         </div>
                     )}
-
                 </div>
             </div>
+
+            {/* ✨ POPUP แจ้งเตือนด่านยังไม่ปลดล็อค ✨ */}
+            {showLockedPopup && (
+                <div className="fixed inset-0 z-[100] flex flex-col justify-center items-center text-center p-6 bg-slate-950/80 backdrop-blur-md animate-fade-in">
+                    <div className="relative overflow-hidden p-8 rounded-[2.5rem] border border-slate-700 bg-slate-900 max-w-[320px] w-full shadow-[0_0_50px_rgba(0,0,0,0.5)] transform transition-all scale-100">
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 blur-[60px] rounded-full pointer-events-none bg-orange-600/20"></div>
+                        
+                        <div className="relative z-10">
+                            <div className="text-6xl mb-4 drop-shadow-xl animate-bounce">🔒</div>
+                            <h2 className="text-2xl font-black mb-3 text-white">ด่านนี้ยังถูกล็อค!</h2>
+                            <p className="text-gray-400 text-[14px] font-medium leading-relaxed mb-6">
+                                คุณต้องผ่านด่านก่อนหน้าในหมวดหมู่นี้<br/>ให้สำเร็จเสียก่อน ถึงจะเข้าเล่นได้
+                            </p>
+                            
+                            <div className="flex gap-3 w-full">
+                                <button
+                                    onClick={() => { playSound('click'); setShowLockedPopup(false); }}
+                                    className="w-full py-3.5 rounded-xl font-bold text-white bg-orange-600 hover:bg-orange-500 shadow-[0_0_15px_rgba(234,88,12,0.4)] transition-all active:scale-95"
+                                >
+                                    ตกลง เข้าใจแล้ว
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            
         </div>
     );
 }
