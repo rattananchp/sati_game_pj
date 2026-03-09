@@ -13,7 +13,13 @@ export default function (prisma) {
     router.post('/submit-score', requireAuth, async (req, res) => {
         // ใช้ uid จาก Token ที่ยืนยันตัวตนแล้ว ป้องกัน IDOR!
         const uid = req.user.uid;
+        const role = req.user.role;
         const { score, gameType, difficulty, logs, timeTaken } = req.body;
+
+        if (role === 'admin') {
+            console.log(`🛡️ Admin ${uid} is playing. Scores/Logs are NOT counted.`);
+            return res.json({ success: true, message: "Admin score ignored" });
+        }
 
         const newScore = parseInt(score);
 
@@ -121,12 +127,17 @@ export default function (prisma) {
         const { type } = req.query; // 'quiz_hard' หรือ 'virus'
 
         try {
-            let whereCondition = {};
+            let whereCondition = {
+                user: {
+                    role: { not: 'admin' } // 🛡️ ไม่เอาคะแนนของ Admin ขึ้น Leaderboard
+                }
+            };
 
             if (type === 'quiz_hard') {
-                whereCondition = { game_type: 'quiz', difficulty: 'hard' };
+                whereCondition.game_type = 'quiz';
+                whereCondition.difficulty = 'hard';
             } else if (type === 'virus') {
-                whereCondition = { game_type: 'virus' };
+                whereCondition.game_type = 'virus';
             } else {
                 return res.json([]);
             }

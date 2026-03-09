@@ -8,7 +8,13 @@ export default function (prisma) {
     router.post('/', requireAuth, async (req, res) => {
         // Use authenticated uid safely
         const uid = req.user.uid;
+        const role = req.user.role;
         const { score, gameType, difficulty, logs, timeTaken } = req.body;
+
+        if (role === 'admin') {
+            console.log(`🛡️ Admin ${uid} is playing. Scores/Logs are NOT counted.`);
+            return res.json({ success: true, message: "Admin score/play ignored" });
+        }
 
         const finalScore = parseInt(score);
         const duration = parseInt(timeTaken) || 0; // ✅ รับค่าเวลาที่เล่นมา
