@@ -4,9 +4,10 @@ import { useRouter } from 'next/navigation';
 interface SidebarProps {
     currentView: ViewState;
     setCurrentView: (view: ViewState) => void;
+    userRole: string;
 }
 
-export default function Sidebar({ currentView, setCurrentView }: SidebarProps) {
+export default function Sidebar({ currentView, setCurrentView, userRole }: SidebarProps) {
     const router = useRouter();
 
     return (
@@ -21,8 +22,10 @@ export default function Sidebar({ currentView, setCurrentView }: SidebarProps) {
                     <MenuButton id="quiz_manage" icon="📝" label="จัดการข้อสอบ" currentView={currentView} setCurrentView={setCurrentView} />
                     <MenuButton id="virus_manage" icon="🦠" label="จัดการไวรัส" currentView={currentView} setCurrentView={setCurrentView} />
                     <MenuButton id="chat_manage" icon="💬" label="จัดการเกมแชท" currentView={currentView} setCurrentView={setCurrentView} />
-                    <MenuButton id="users" icon="👥" label="จัดการผู้เล่น" currentView={currentView} setCurrentView={setCurrentView} />
-                    
+                    {userRole === 'admin' && (
+                        <MenuButton id="users" icon="👥" label="จัดการผู้เล่น" currentView={currentView} setCurrentView={setCurrentView} />
+                    )}
+
                     <div className="pt-4 pb-2">
                         <div className="h-px bg-white/10 mx-2"></div>
                     </div>

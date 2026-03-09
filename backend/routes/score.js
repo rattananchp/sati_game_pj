@@ -16,9 +16,9 @@ export default function (prisma) {
         const role = req.user.role;
         const { score, gameType, difficulty, logs, timeTaken } = req.body;
 
-        if (role === 'admin') {
-            console.log(`🛡️ Admin ${uid} is playing. Scores/Logs are NOT counted.`);
-            return res.json({ success: true, message: "Admin score ignored" });
+        if (role === 'admin' || role === 'editor') {
+            console.log(`🛡️ ${role} ${uid} is playing. Scores/Logs are NOT counted.`);
+            return res.json({ success: true, message: `${role.charAt(0).toUpperCase() + role.slice(1)} score ignored` });
         }
 
         const newScore = parseInt(score);
@@ -129,7 +129,7 @@ export default function (prisma) {
         try {
             let whereCondition = {
                 user: {
-                    role: { not: 'admin' } // 🛡️ ไม่เอาคะแนนของ Admin ขึ้น Leaderboard
+                    role: { notIn: ['admin', 'editor'] } // 🛡️ ไม่เอาคะแนนของ Admin และ Editor ขึ้น Leaderboard
                 }
             };
 
