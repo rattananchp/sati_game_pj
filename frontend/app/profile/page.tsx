@@ -10,7 +10,6 @@ interface UserData {
     uid?: number;
     id?: number;
     username: string;
-    // emoji?: string; // ❌ ลบออก
     password?: string;
 }
 
@@ -26,12 +25,13 @@ const Icons = {
     UserBig: () => <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>,
     Lock: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>,
     LogOut: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" x2="9" y1="12" y2="12" /></svg>,
-    Home: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>,
     Trophy: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" /><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" /><path d="M4 22h16" /><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" /><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" /><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" /></svg>,
     Zap: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>,
     Message: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" /></svg>,
     Check: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>,
-    ChevronRight: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+    ChevronRight: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>,
+    // ✅ เพิ่ม Icon สำหรับปุ่มย้อนกลับ
+    BackArrow: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
 };
 
 export default function ProfilePage() {
@@ -74,13 +74,11 @@ export default function ProfilePage() {
     // Fetch Stats
     const fetchGameStats = async (userId: number) => {
         try {
-            // ✅ Auto-detect Environment
             let apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
             if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
                 apiUrl = 'http://localhost:4000';
             }
 
-            // apiUrl = 'http://localhost:4000';
             const token = localStorage.getItem('token');
             const res = await fetch(`${apiUrl}/scores/stats?userId=${userId}`, {
                 headers: {
@@ -121,7 +119,7 @@ export default function ProfilePage() {
         return () => clearTimeout(timer);
     }, [router]);
 
-    // 🔥🔥🔥 แก้ไข: บันทึกชื่อลง Database 🔥🔥🔥
+    // บันทึกชื่อ
     const handleSaveInfo = async () => {
         playSound('click');
         if (!user) return;
@@ -132,14 +130,12 @@ export default function ProfilePage() {
 
         setIsLoading(true);
         try {
-            // ✅ Auto-detect Environment
             let apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
             if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
                 apiUrl = 'http://localhost:4000';
             }
 
             const token = localStorage.getItem('token');
-            // 1. ส่งข้อมูลไปอัปเดตที่ Backend
             const res = await fetch(`${apiUrl}/user/update-profile`, {
                 method: 'POST',
                 headers: {
@@ -153,7 +149,6 @@ export default function ProfilePage() {
             });
 
             if (res.ok) {
-                // 2. ถ้าสำเร็จ อัปเดต LocalStorage และ State
                 const updatedUser = { ...user, username: tempUsername };
                 localStorage.setItem('user', JSON.stringify(updatedUser));
                 setUser(updatedUser);
@@ -171,7 +166,7 @@ export default function ProfilePage() {
         }
     };
 
-    // 🔥🔥🔥 บันทึกรหัสผ่านลง Database 🔥🔥🔥
+    // บันทึกรหัสผ่าน
     const handleSavePassword = async () => {
         playSound('click');
         if (!user) return;
@@ -196,15 +191,13 @@ export default function ProfilePage() {
             setMessage('รหัสผ่านใหม่ต้องไม่ซ้ำกับรหัสผ่านเดิม!');
             return;
         }
-        // เช็คค่า
+        
         const payload = {
             userId: user.uid || user.id,
             currentPassword: currentPasswordInput,
             newPassword: newPassword
         };
-        console.log("ข้อมูลที่จะส่งไป Backend:", payload);
 
-        // ถ้า userId เป็น undefined ให้แจ้งเตือน
         if (!payload.userId) {
             setMessage('ไม่พบ User ID กรุณาล็อกอินใหม่');
             return;
@@ -213,12 +206,10 @@ export default function ProfilePage() {
         setIsLoading(true);
 
         try {
-            // ✅ Auto-detect Environment
             let apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
             if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
                 apiUrl = 'http://localhost:4000';
             }
-            //const apiUrl = 'http://localhost:4000';
             const token = localStorage.getItem('token');
 
             const res = await fetch(`${apiUrl}/user/change-password`, {
@@ -227,11 +218,6 @@ export default function ProfilePage() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                // body: JSON.stringify({
-                //     userId: user.uid || user.id,
-                //     currentPassword: currentPasswordInput,
-                //     newPassword: newPassword
-                // })
                 body: JSON.stringify(payload)
             });
 
@@ -239,7 +225,7 @@ export default function ProfilePage() {
 
             if (res.ok) {
                 const updatedUser = { ...user };
-                delete updatedUser.password; // เพื่อความปลอดภัย ไม่ควรบันทึกรหัสผ่านใน LocalStorage
+                delete updatedUser.password; 
                 localStorage.setItem('user', JSON.stringify(updatedUser));
 
                 setCurrentPasswordInput('');
@@ -288,11 +274,20 @@ export default function ProfilePage() {
 
                     <div className="p-6 md:p-8 flex flex-col items-center gap-6 relative z-10">
 
-                        <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 uppercase tracking-widest drop-shadow-sm">
+                        {/* ✨ แก้ไข: ย้ายปุ่มกลับหน้าหลักไปมุมซ้ายบน และเปลี่ยนไอคอนเป็นลูกศรย้อนกลับ ✨ */}
+                        <button
+                            onClick={() => { playSound('click'); router.push('/'); }}
+                            className="absolute top-6 left-6 md:top-8 md:left-8 p-2 rounded-full bg-transparent hover:bg-white/10 text-gray-400 hover:text-white transition-all active:scale-95 z-20"
+                            title="กลับสู่เมนูหลัก"
+                        >
+                            <Icons.BackArrow />
+                        </button>
+
+                        <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 uppercase tracking-widest drop-shadow-sm mt-1">
                             โปรไฟล์
                         </h1>
 
-                        {/* --- 1. Avatar Section (Updated to match Home Page Button) --- */}
+                        {/* --- 1. Avatar Section --- */}
                         <div className="relative group">
                             <div className="absolute -inset-4 bg-gradient-to-tr from-purple-600 to-blue-600 rounded-full blur-xl opacity-40 group-hover:opacity-60 transition duration-500 animate-pulse-slow"></div>
 
@@ -348,7 +343,7 @@ export default function ProfilePage() {
                             </div>
                         )}
 
-                        {/* --- 3. Edit Name Form (เอา Emoji ออก) --- */}
+                        {/* --- 3. Edit Name Form --- */}
                         {editMode === 'info' && (
                             <div className="w-full space-y-5 animate-slide-up text-left bg-white/5 p-4 rounded-2xl border border-white/5">
                                 {message && (
@@ -455,19 +450,14 @@ export default function ProfilePage() {
                                         <div className="text-gray-500 group-hover:text-white transition-colors"><Icons.ChevronRight /></div>
                                     </button>
 
-                                    <button onClick={() => router.push('/')} className="group w-full p-3.5 mt-2 rounded-xl bg-gradient-to-r from-gray-800 to-gray-900 border border-white/10 hover:border-white/20 transition-all flex items-center justify-center gap-2 active:scale-[0.98] shadow-lg">
-                                        <span className="text-gray-300 group-hover:text-white font-bold text-sm"><Icons.Home /></span>
-                                        <span className="font-bold text-sm text-gray-300 group-hover:text-white">กลับสู่เมนูหลัก</span>
-                                    </button>
-
-                                    <button onClick={handleLogout} className="w-full py-2 mt-2 text-xs text-red-400/70 hover:text-red-400 font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2">
+                                    <button onClick={handleLogout} className="w-full py-2 mt-4 text-xs text-red-400/70 hover:text-red-400 font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2">
                                         <Icons.LogOut /> ออกจากระบบ
                                     </button>
                                 </>
                             ) : (
                                 <button
                                     onClick={closeEditMode}
-                                    className="w-full py-3 text-xs text-gray-400 font-bold uppercase tracking-widest hover:text-white flex justify-center items-center gap-2 transition-all bg-white/5 rounded-xl hover:bg-white/10"
+                                    className="w-full py-3 text-xs text-gray-400 font-bold uppercase tracking-widest hover:text-white flex justify-center items-center gap-2 transition-all bg-white/5 rounded-xl hover:bg-white/10 mt-2"
                                 >
                                     <span>✕</span> ยกเลิกการแก้ไข
                                 </button>

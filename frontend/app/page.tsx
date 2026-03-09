@@ -10,7 +10,7 @@ import Image from 'next/image';
 interface UserData {
   username: string;
   emoji?: string;
-  role?: string; // ✅ Added role for Admin check
+  role?: string;
 }
 
 interface GameStats {
@@ -19,21 +19,23 @@ interface GameStats {
   chat: number;
 }
 
+// 2. Icons
+// ✅ เพิ่มไอคอน BackArrow ลงในนี้
+const Icons = {
+  BackArrow: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+};
+
 export default function HomePage() {
   const router = useRouter();
   const { isMuted, toggleMute, playSound } = useSound();
   const [view, setView] = useState<'home' | 'bet'>('home');
 
-  // ✅ 1. เพิ่มบรรทัดนี้กลับมาครับ (เพื่อให้เมนูใช้งานได้)
   const menuRef = useRef<HTMLDivElement>(null);
 
   const [user, setUser] = useState<UserData | null>(null);
   const [stats, setStats] = useState<GameStats>({ normal: 0, virus: 0, chat: 0 });
   const [isLoaded, setIsLoaded] = useState(false);
   const [isMobileMenuExpanded, setIsMobileMenuExpanded] = useState(false);
-
-  // Ban Popup State Removed
-  // const [banDetails, setBanDetails] = useState<{ isBanned: boolean; reason: string; expiry: string } | null>(null);
 
   // Logic Click Outside สำหรับ Profile Menu
   useEffect(() => {
@@ -48,7 +50,7 @@ export default function HomePage() {
     };
   }, [isMobileMenuExpanded]);
 
-  // ✅ 3. โหลดข้อมูล User และเช็คสถานะ Ban
+  // โหลดข้อมูล User 
   useEffect(() => {
     const timer = setTimeout(async () => {
       try {
@@ -65,7 +67,6 @@ export default function HomePage() {
 
         if (storedUser) {
           setUser(storedUser);
-          // Ban Check Removed
         }
 
         setIsLoaded(true);
@@ -80,12 +81,9 @@ export default function HomePage() {
 
   const handleLogout = () => {
     playSound('click');
-    // if (confirm('คุณต้องการออกจากระบบใช่หรือไม่?')) { // ถ้ากดจาก Popup ไม่ต้องถาม
     localStorage.removeItem('user');
     setUser(null);
-    // setBanDetails(null); // Clear ban details
     router.push('/login');
-    // }
   };
 
   const handleLogoutConfirm = () => {
@@ -94,9 +92,7 @@ export default function HomePage() {
     }
   }
 
-
   const handleStart = (mode: string) => {
-    // if (banDetails?.isBanned) return; // Prevent play if banned (UI Check)
     playSound('click');
     if (!user) {
       router.push('/login');
@@ -119,8 +115,6 @@ export default function HomePage() {
 
   return (
     <main className="relative w-screen min-h-screen flex flex-col items-center justify-start md:justify-center p-4 pt-20 pb-24 overflow-x-hidden overflow-y-auto bg-slate-900 font-sans">
-
-      {/* 🔴 BAN POPUP MODAL REMOVED */}
 
       {/* ==================== ✨ พื้นหลัง ✨ ==================== */}
       <div className="fixed inset-0 z-0 overflow-hidden bg-slate-950">
@@ -330,14 +324,13 @@ export default function HomePage() {
       {view === 'bet' && (
         <div className="relative w-full max-w-sm bg-white/5 backdrop-blur-xl border border-white/15 rounded-[2rem] p-8 animate-fade-in z-10 shadow-[0_0_60px_rgba(0,0,0,0.4)]">
 
-          {/* 🔙 ปุ่มย้อนกลับ (อยู่บนซ้ายในกรอบ) */}
+          {/* ✨ เปลี่ยนเป็นปุ่มลูกศรวงกลม ✨ */}
           <button
             onClick={() => { playSound('click'); setView('home'); }}
-            className="absolute top-7 left-6 text-gray-400 font-bold hover:text-white flex justify-center items-center gap-1 transition-all opacity-70 hover:opacity-100 group"
+            className="absolute top-6 left-6 p-2 rounded-full bg-transparent hover:bg-white/10 text-gray-400 hover:text-white transition-all active:scale-95 z-20"
             title="กลับหน้าหลัก"
           >
-            <span className="text-lg leading-none group-hover:-translate-x-1 transition-transform duration-300">←</span>
-            <span className="text-xs uppercase tracking-wider">กลับ</span>
+            <Icons.BackArrow />
           </button>
 
           <div className="text-center mb-8 mt-2">
