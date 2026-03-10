@@ -61,14 +61,29 @@ export default function RegisterPage() {
 
         try {
             // --- Validation (ตรวจสอบความถูกต้อง) ---
-            if (formData.password !== formData.confirmPassword) {
-                throw new Error('รหัสผ่านไม่ตรงกัน');
+            if (!formData.username.trim()) {
+                throw new Error('กรุณากรอกชื่อผู้ใช้');
             }
-            if (formData.password.length < 4) {
-                throw new Error('รหัสผ่านสั้นเกินไป');
+            if (!formData.email.trim()) {
+                throw new Error('กรุณากรอกอีเมล');
+            }
+            if (!formData.phone.trim()) {
+                throw new Error('กรุณากรอกเบอร์โทรศัพท์');
             }
             if (!formData.birthDay || !formData.birthMonth || !formData.birthYear) {
                 throw new Error('กรุณากรอกวันเดือนปีเกิดให้ครบ');
+            }
+            if (!formData.password.trim()) {
+                throw new Error('กรุณากรอกรหัสผ่าน');
+            }
+            if (formData.password.length < 4) {
+                throw new Error('รหัสผ่านไม่ตรงกับเงื่อนไข');
+            }
+            if (!formData.confirmPassword.trim()) {
+                throw new Error('กรุณายืนยันรหัสผ่าน');
+            }
+            if (formData.password !== formData.confirmPassword) {
+                throw new Error('รหัสผ่านไม่ตรงกัน');
             }
 
             const yearBE = parseInt(formData.birthYear);
@@ -123,6 +138,15 @@ export default function RegisterPage() {
             const data = await res.json();
 
             if (!res.ok) {
+                if (data.error === "ชื่อผู้ใช้นี้ถูกใช้งานแล้ว!") {
+                    throw new Error('ชื่อผู้ใช้ซ้ำ กรุณาใช้ชื่ออื่น');
+                }
+                if (data.error === "อีเมลนี้ถูกใช้งานแล้ว!") {
+                    throw new Error('อีเมลนี้ถูกใช้งานแล้ว!');
+                }
+                if (data.error === "เบอร์โทรศัพท์นี้ถูกใช้งานแล้ว!") {
+                    throw new Error('เบอร์โทรศัพท์นี้ถูกใช้งานแล้ว!');
+                }
                 throw new Error(data.error || 'สมัครสมาชิกไม่สำเร็จ');
             }
 
@@ -150,8 +174,8 @@ export default function RegisterPage() {
                 localStorage.setItem('token', data.token);
             }
 
-            alert('สมัครสมาชิกเรียบร้อย! ระบบจะพาท่านเข้าสู่หน้าหลักเกม');
-            router.push('/');
+            alert('ลงทะเบียนเสร็จสิ้น');
+            router.push('/login');
             // ไม่ต้อง set false ที่นี่ เพราะเดี๋ยวหน้าเว็บเปลี่ยนแล้ว
 
         } catch (err: unknown) {
@@ -207,7 +231,7 @@ export default function RegisterPage() {
                             <label className="text-[10px] text-gray-400 font-bold ml-2 mb-1 block group-focus-within:text-blue-400 transition-colors uppercase tracking-wider">ชื่อผู้ใช้</label>
                             <div className="relative">
                                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-blue-400 transition-colors"><Icons.User /></div>
-                                <input type="text" name="username" required value={formData.username} onChange={handleChange}
+                                <input type="text" name="username" value={formData.username} onChange={handleChange}
                                     className="w-full bg-slate-900/50 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder-gray-600"
                                     placeholder="ตั้งชื่อผู้ใช้" autoComplete="off"
                                 />
@@ -217,7 +241,7 @@ export default function RegisterPage() {
                             <label className="text-[10px] text-gray-400 font-bold ml-2 mb-1 block group-focus-within:text-blue-400 transition-colors uppercase tracking-wider">อีเมล</label>
                             <div className="relative">
                                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-blue-400 transition-colors"><Icons.Mail /></div>
-                                <input type="email" name="email" required value={formData.email} onChange={handleChange}
+                                <input type="email" name="email" value={formData.email} onChange={handleChange}
                                     className="w-full bg-slate-900/50 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder-gray-600"
                                     placeholder="example@mail.com"
                                 />
@@ -232,7 +256,7 @@ export default function RegisterPage() {
                             <div className="relative">
                                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-yellow-400 transition-colors"><Icons.Phone /></div>
                                 <input
-                                    type="tel" name="phone" required value={formData.phone} onChange={handleChange} maxLength={10}
+                                    type="tel" name="phone" value={formData.phone} onChange={handleChange} maxLength={10}
                                     className="w-full bg-slate-900/50 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-white text-sm focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 transition-all placeholder-gray-600"
                                     placeholder="08xxxxxxxx"
                                 />
@@ -250,7 +274,7 @@ export default function RegisterPage() {
                                 <div className="flex items-center gap-1 pl-6 w-full text-white text-sm">
                                     <input
                                         ref={dayRef}
-                                        type="tel" name="birthDay" placeholder="01" maxLength={2} required
+                                        type="tel" name="birthDay" placeholder="01" maxLength={2}
                                         value={formData.birthDay} onChange={handleChange}
                                         className="w-[3ch] bg-transparent text-center focus:outline-none placeholder-gray-600"
                                     />
@@ -258,7 +282,7 @@ export default function RegisterPage() {
 
                                     <input
                                         ref={monthRef}
-                                        type="tel" name="birthMonth" placeholder="01" maxLength={2} required
+                                        type="tel" name="birthMonth" placeholder="01" maxLength={2}
                                         value={formData.birthMonth} onChange={handleChange}
                                         onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => handleKeyDown(e, dayRef)}
                                         className="w-[3ch] bg-transparent text-center focus:outline-none placeholder-gray-600"
@@ -267,7 +291,7 @@ export default function RegisterPage() {
 
                                     <input
                                         ref={yearRef}
-                                        type="tel" name="birthYear" placeholder="2543" maxLength={4} required
+                                        type="tel" name="birthYear" placeholder="2543" maxLength={4}
                                         value={formData.birthYear} onChange={handleChange}
                                         onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => handleKeyDown(e, monthRef)}
                                         className="w-[5ch] bg-transparent text-center focus:outline-none placeholder-gray-600"
@@ -283,7 +307,7 @@ export default function RegisterPage() {
                             <label className="text-[10px] text-gray-400 font-bold ml-2 mb-1 block group-focus-within:text-purple-400 transition-colors uppercase tracking-wider">รหัสผ่าน</label>
                             <div className="relative">
                                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-purple-400 transition-colors"><Icons.Lock /></div>
-                                <input type="password" name="password" required value={formData.password} onChange={handleChange}
+                                <input type="password" name="password" value={formData.password} onChange={handleChange}
                                     className="w-full bg-slate-900/50 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all placeholder-gray-600"
                                     placeholder="••••••"
                                 />
@@ -293,7 +317,7 @@ export default function RegisterPage() {
                             <label className="text-[10px] text-gray-400 font-bold ml-2 mb-1 block group-focus-within:text-green-400 transition-colors uppercase tracking-wider">ยืนยันรหัสผ่าน</label>
                             <div className="relative">
                                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-green-400 transition-colors"><Icons.Lock /></div>
-                                <input type="password" name="confirmPassword" required value={formData.confirmPassword} onChange={handleChange}
+                                <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange}
                                     className="w-full bg-slate-900/50 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-white text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-all placeholder-gray-600"
                                     placeholder="••••••"
                                 />

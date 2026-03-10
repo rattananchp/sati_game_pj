@@ -8,12 +8,29 @@ export default function LoginPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const isUsernameEmpty = !formData.username.trim();
+    const isPasswordEmpty = !formData.password.trim();
+
+    if (isUsernameEmpty && isPasswordEmpty) {
+      setError('กรุณากรอกข้อมูล');
+      return;
+    } else if (isUsernameEmpty) {
+      setError('กรุณากรอกชื่อผู้ใช้');
+      return;
+    } else if (isPasswordEmpty) {
+      setError('กรุณากรอกรหัสผ่าน');
+      return;
+    }
+
     setIsLoading(true);
     setError('');
+    setSuccess('');
 
     // ✅ 1. Auto-detect Environment
     // ถ้าเปิดผ่าน localhost ให้ชี้ไปที่ port 4000
@@ -77,14 +94,18 @@ export default function LoginPage() {
       // ============================================
       // 🚦 จุดแยกทาง (Redirect Logic)
       // ============================================
+      
+      setSuccess('เข้าสู่ระบบสำเร็จ');
 
-      if (userRole === 'admin') {
-        console.log("👑 Admin Login Success -> Redirecting to Home (Admin Button will appear)");
-        router.push('/');
-      } else {
-        console.log("👋 User Login Success -> Redirecting to Home");
-        router.push('/');
-      }
+      setTimeout(() => {
+        if (userRole === 'admin') {
+          console.log("👑 Admin Login Success -> Redirecting to Home (Admin Button will appear)");
+          router.push('/');
+        } else {
+          console.log("👋 User Login Success -> Redirecting to Home");
+          router.push('/');
+        }
+      }, 1000);
 
     } catch (err: unknown) {
       console.error("Login Error:", err);
@@ -122,7 +143,6 @@ export default function LoginPage() {
               className="w-full p-4 bg-black/40 border border-white/10 rounded-xl text-white focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 transition-all placeholder:text-gray-500"
               value={formData.username}
               onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-              required
             />
           </div>
           <div>
@@ -132,7 +152,6 @@ export default function LoginPage() {
               className="w-full p-4 bg-black/40 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-500"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              required
             />
             <div className="text-right mt-1">
               <Link href="/forgot_pass" className="text-[10px] text-gray-400 hover:text-purple-300 transition-colors">
@@ -144,6 +163,12 @@ export default function LoginPage() {
           {error && (
             <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-200 text-sm text-center font-bold animate-pulse whitespace-pre-wrap leading-relaxed">
               ⚠️ {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="p-3 bg-green-500/20 border border-green-500/50 rounded-lg text-green-200 text-sm text-center font-bold animate-pulse whitespace-pre-wrap leading-relaxed">
+              ✅ {success}
             </div>
           )}
 
