@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useState, useEffect, useMemo, useCallback, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { playSound } from '@/app/lib/sound';
@@ -333,13 +333,13 @@ function QuizContent() {
                         </div>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-3 justify-center mt-2">
-                        <button onClick={() => window.location.reload()} className="w-full sm:w-auto px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-white font-bold uppercase tracking-widest hover:bg-white/10 transition-all shadow-lg active:scale-95 text-sm">
-                            🔄 เล่นอีกครั้ง
-                        </button>
-                        <Link href="/" className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold uppercase tracking-widest hover:shadow-lg transition-all flex justify-center items-center shadow-lg active:scale-95 text-sm">
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center mt-2 w-full">
+                        <Link href="/" className="flex-1 px-6 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold uppercase tracking-widest hover:shadow-lg transition-all flex justify-center items-center shadow-lg active:scale-95 text-sm">
                             🏠 หน้าหลัก
                         </Link>
+                        <button onClick={() => window.location.reload()} className="flex-1 px-6 py-4 rounded-xl bg-white/5 border border-white/10 text-white font-bold uppercase tracking-widest hover:bg-white/10 transition-all shadow-lg active:scale-95 text-sm">
+                            🔄 เล่นอีกครั้ง
+                        </button>
                     </div>
                 </div>
             </main>
