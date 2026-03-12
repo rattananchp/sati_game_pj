@@ -45,7 +45,19 @@ export interface QuestionDetail {
 }
 
 export interface DashboardData {
-    overview: Overview;
+    overview: {
+        totalUsers: number;
+        totalGames: number;       // สมมติว่าเป็น Quiz
+        totalVirusGames: number;
+        totalChatGames: number;   // ✅ เพิ่มอันนี้
+    };
+    // ✅ เพิ่มข้อมูลสำหรับทำกราฟ
+    monthlyStats?: {
+        month: string;
+        quiz: number;
+        virus: number;
+        chat: number;
+    }[];
 }
 
 export interface Category {

@@ -29,7 +29,9 @@ export default function AdminDashboard() {
     const [isAuthorized, setIsAuthorized] = useState(false);
     const [data, setData] = useState<DashboardData | null>(null);
     const [loading, setLoading] = useState(true); // Loading for Auth & Init Data
-    const [userRole, setUserRole] = useState<string>('');
+    
+    // ✅ แก้ไข: ลบอันที่ซ้ำออก เหลือแค่อันเดียว
+    const [userRole, setUserRole] = useState<string>(''); 
 
     // Shared State for Modals & Actions
     const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -44,11 +46,13 @@ export default function AdminDashboard() {
         if (!userStr) { router.push('/login'); return; }
         try {
             const user = JSON.parse(userStr);
+            
+            // ✅ อนุญาตให้ทั้ง admin และ editor เข้าหน้านี้ได้
             if (user.role !== 'admin' && user.role !== 'editor') {
                 alert("⛔️ คุณไม่มีสิทธิ์เข้าถึงหน้านี้!");
                 router.push('/');
             } else {
-                setUserRole(user.role);
+                setUserRole(user.role); // ✅ เซ็ตค่า Role ให้ตรงกับ Database
                 setIsAuthorized(true);
                 // Fetch Initial Data
                 fetch(`${API_URL}/admin/stats`)
@@ -61,7 +65,7 @@ export default function AdminDashboard() {
             router.push('/login');
         }
     }, [router, API_URL]);
-
+    
     // --- Actions ---
     const handleRefresh = () => setRefreshTrigger(prev => prev + 1);
 
@@ -98,19 +102,20 @@ export default function AdminDashboard() {
     };
 
     if (!isAuthorized || loading) return (
-        <div className="min-h-screen bg-transparent flex flex-col items-center justify-center text-white gap-4">
+        <div className="fixed inset-0 z-[100] bg-slate-950 flex flex-col items-center justify-center text-white gap-4">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
             <div className="text-gray-400 text-sm animate-pulse">กำลังตรวจสอบสิทธิ์...</div>
         </div>
     );
 
     return (
-        <div className="flex h-screen w-full text-gray-100 font-sans overflow-hidden relative">
+        // ✅ 1. ใช้ fixed inset-0 z-[100] เพื่อกางหน้า Admin ทับทุกสิ่งทุกอย่าง (ปิดรอยรั่ว 100%)
+        <div className="fixed inset-0 z-[100] flex text-gray-100 font-sans overflow-hidden bg-slate-950">
 
-            {/* Animated Background Layer */}
-            <div className="absolute inset-0 overflow-hidden z-0 pointer-events-none">
+            {/* ✅ 2. พื้นหลังล็อกติดอยู่กับที่ ไม่ขยับไปไหน */}
+            <div className="absolute inset-0 z-0 pointer-events-none bg-slate-950">
                 <div
-                    className="absolute inset-0 w-full h-full animate-pan-bg"
+                    className="absolute inset-0 w-full h-full opacity-20"
                     style={{
                         backgroundImage: "url('/images/bg1.png')",
                         backgroundSize: 'cover',
@@ -118,18 +123,19 @@ export default function AdminDashboard() {
                         backgroundRepeat: 'no-repeat'
                     }}
                 />
+                <div className="absolute inset-0 bg-slate-950/80"></div>
             </div>
 
-            {/* Background Overlay for better readability (Removed backdrop-blur for performance) */}
-            <div className="absolute inset-0 bg-slate-950/80 pointer-events-none z-0"></div>
+            {/* Sidebar component */}
+            <Sidebar currentView={currentView} setCurrentView={setCurrentView} userRole={userRole} />
 
-            <div className="relative z-10 flex h-full w-full">
-                <Sidebar currentView={currentView} setCurrentView={setCurrentView} userRole={userRole} />
+            {/* ✅ 3. ให้ส่วนเนื้อหาหลัก scroll ได้อิสระ (h-full overflow-y-auto) */}
+            <main className="flex-1 h-full overflow-y-auto p-4 md:p-10 relative z-10 custom-scrollbar">
+                
+                {/* Background Ambience ภายในเนื้อหา */}
+                <div className="absolute top-0 left-0 w-full h-96 pointer-events-none bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/10 via-transparent to-transparent"></div>
 
-                <main className="flex-1 overflow-y-auto p-6 md:p-10 relative custom-scrollbar">
-                    {/* Background Ambience (Replaced expensive blur with radial gradient) */}
-                    <div className="absolute top-0 left-0 w-full h-96 pointer-events-none bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/20 via-transparent to-transparent"></div>
-
+                <div className="relative z-10 max-w-[1400px] mx-auto pb-10">
                     {currentView === 'dashboard' && <Dashboard data={data} />}
 
                     {currentView === 'quiz_manage' && (
@@ -145,33 +151,33 @@ export default function AdminDashboard() {
 
                     {currentView === 'virus_manage' && <VirusAdmin API_URL={API_URL} />}
 
-                    {currentView === 'users' && userRole === 'admin' && <Users API_URL={API_URL} />}
+                    {currentView === 'users' && <Users API_URL={API_URL} currentUserRole={userRole} />}
 
                     {currentView === 'add_question' && <QuestionAdd API_URL={API_URL} />}
 
                     {currentView === 'chat_manage' && <ChatAdmin API_URL={API_URL} />}
-                </main>
+                </div>
+            </main>
 
-                {/* Modals */}
-                {selectedQuestion && (
-                    <QuestionDetail
-                        question={selectedQuestion}
-                        details={questionDetails}
-                        isLoading={isLoadingDetail}
-                        API_URL={API_URL}
-                        onClose={() => setSelectedQuestion(null)}
-                    />
-                )}
+            {/* Modals ... */}
+            {selectedQuestion && (
+                <QuestionDetail
+                    question={selectedQuestion}
+                    details={questionDetails}
+                    isLoading={isLoadingDetail}
+                    API_URL={API_URL}
+                    onClose={() => setSelectedQuestion(null)}
+                />
+            )}
 
-                {editingQuestionId && (
-                    <QuestionEdit
-                        questionId={editingQuestionId}
-                        API_URL={API_URL}
-                        onClose={() => setEditingQuestionId(null)}
-                        onRefresh={handleRefresh}
-                    />
-                )}
-            </div>
+            {editingQuestionId && (
+                <QuestionEdit
+                    questionId={editingQuestionId}
+                    API_URL={API_URL}
+                    onClose={() => setEditingQuestionId(null)}
+                    onRefresh={handleRefresh}
+                />
+            )}
         </div>
     );
 }

@@ -16,38 +16,75 @@ export default function (prisma) {
         }
     });
 
-    // 1. API: ดึงภาพรวม (Overview)
-    router.get('/stats', async (req, res) => {
-        try {
-            const totalUsers = await prisma.user.count({ where: { role: 'user' } });
-            const totalGames = await prisma.game.count({
-                where: {
-                    user: { role: { notIn: ['admin', 'editor'] } }
-                }
-            }); // ✅ นับจากตารางประวัติการเล่น (Game) แทน Leaderboard เเละไม่นับ Admin
+    // 📁 routes/admin.js (หรือไฟล์ที่เกี่ยวกับสถิติ)
 
-            // ✅ แก้ไข: นับยอดรวมการเล่น Virus จาก play_count ของทุกคนรวมกัน (ไม่นับ Admin)
-            const virusAgg = await prisma.gameScore.aggregate({
-                _sum: { play_count: true },
-                where: {
-                    game_type: 'virus',
-                    user: { role: { notIn: ['admin', 'editor'] } }
-                }
-            });
-            const totalVirusGames = virusAgg._sum.play_count || 0;
+router.get('/stats', async (req, res) => {
+    try {
+        // 1. ดึงภาพรวมตัวเลขทั้งหมด (เอาไว้โชว์บนการ์ด 4 ใบด้านบน)
+        const totalUsers = await prisma.user.count({ where: { role: { not: 'admin' } } }); 
+        
+        // นับจากตาราง GameScore
+        const totalQuiz = await prisma.gameScore.count({ where: { game_type: 'quiz' } });
+        const totalVirus = await prisma.gameScore.count({ where: { game_type: 'virus' } });
+        const totalChat = await prisma.gameScore.count({ where: { game_type: 'chat' } });
 
-            res.json({
-                overview: {
-                    totalUsers,
-                    totalGames,
-                    totalVirusGames
-                }
-            });
-        } catch (err) {
-            console.error(err);
-            res.status(500).json({ error: "Stats error" });
-        }
-    });
+        // (ถ้าโหมดควิซเก่าคุณเก็บในตาราง Game ให้นำมารวมด้วยแบบนี้)
+        const legacyQuiz = await prisma.game.count(); 
+        const allQuizGames = totalQuiz + legacyQuiz;
+
+        // 2. คำนวณข้อมูลรายเดือน (สำหรับทำกราฟ)
+        const currentYear = new Date().getFullYear();
+        // เริ่มนับตั้งแต่วันที่ 1 มกราคม ของปีปัจจุบัน
+        const startOfYear = new Date(`${currentYear}-01-01T00:00:00.000Z`);
+
+        // ดึงประวัติการเล่นทั้งหมดของปีนี้
+        const scoresThisYear = await prisma.gameScore.findMany({
+            where: { played_at: { gte: startOfYear } },
+            select: { game_type: true, played_at: true }
+        });
+
+        // ดึงประวัติ Quiz แบบเก่า (ถ้ามี)
+        const legacyGamesThisYear = await prisma.game.findMany({
+            where: { started_at: { gte: startOfYear } },
+            select: { started_at: true }
+        });
+
+        // สร้างโครงร่างตาราง 12 เดือน รอใส่ข้อมูล
+        const thaiMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+        const monthlyStats = thaiMonths.map(month => ({ month, quiz: 0, virus: 0, chat: 0 }));
+
+        // นำข้อมูล GameScore มาบวกเข้าในแต่ละเดือน
+        scoresThisYear.forEach(score => {
+            const monthIndex = score.played_at.getMonth(); // ได้ค่า 0 (ม.ค.) ถึง 11 (ธ.ค.)
+            const type = score.game_type.toLowerCase();
+            
+            if (type === 'quiz' || type === 'normal') monthlyStats[monthIndex].quiz += 1;
+            else if (type === 'virus') monthlyStats[monthIndex].virus += 1;
+            else if (type === 'chat') monthlyStats[monthIndex].chat += 1;
+        });
+
+        // นำข้อมูลตาราง Game รุ่นเก่ามารวมในเดือนนั้นๆ (ถ้ามี)
+        legacyGamesThisYear.forEach(game => {
+            const monthIndex = game.started_at.getMonth();
+            monthlyStats[monthIndex].quiz += 1;
+        });
+
+        // 3. ส่งข้อมูลที่คำนวณเสร็จแล้วกลับไปให้เว็บ
+        res.json({
+            overview: {
+                totalUsers: totalUsers,
+                totalGames: allQuizGames,
+                totalVirusGames: totalVirus,
+                totalChatGames: totalChat
+            },
+            monthlyStats: monthlyStats
+        });
+
+    } catch (error) {
+        console.error("Stats Error:", error);
+        res.status(500).json({ error: "Failed to fetch stats" });
+    }
+});
     // 2. API: ดึงรายการข้อสอบ (ปรับปรุง: รองรับ Filter Level)
     router.get('/questions', async (req, res) => {
         try {
@@ -340,61 +377,57 @@ export default function (prisma) {
     });
 
     // ✅ 8. API: ดึงรายชื่อผู้ใช้งานทั้งหมด (User Management)
-    router.get('/users', requireAuth, async (req, res) => {
-        try {
-            // Check if user is admin
-            if (req.user.role !== 'admin') {
-                return res.status(403).json({ error: "ไม่มีสิทธิ์เข้าถึง (Admin only)" });
-            }
+    // 📁 routes/admin.js (ฝั่ง Backend)
 
-            const page = parseInt(req.query.page) || 1;
-            const limit = parseInt(req.query.limit) || 10;
-            const search = req.query.search || '';
+router.get('/users', async (req, res) => {
+    try {
+        // 1. รับพารามิเตอร์ที่หน้าเว็บส่งมา (ถ้าไม่ส่งมา ให้ใช้ค่าเริ่มต้น)
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 8; // ✅ รับค่า limit = 8
+        const search = req.query.search || '';
+        const tab = req.query.tab || 'player'; // ✅ รับค่า tab (player หรือ staff)
 
-            const whereClause = search ? {
-                OR: [
-                    { username: { contains: search } },
-                    { email: { contains: search } }
-                ]
-            } : {};
+        const skip = (page - 1) * limit;
 
-
-
-            const users = await prisma.user.findMany({
-                where: whereClause,
-                select: {
-                    uid: true,
-                    username: true,
-                    email: true,
-                    role: true,
-                    phone: true,
-                    scores: true // ✅ ดึงข้อมูล score ทั้งหมดมานับจำนวนแทน (เพราะไม่ได้ update db field play_count)
-                },
-                orderBy: { uid: 'desc' },
-                skip: (page - 1) * limit,
-                take: limit
-            });
-
-            // ✅ คำนวณจำนวนเกมทั้งหมดที่เล่น (ตัดออกตาม request)
-            const usersWithStats = users.map(u => ({
-                ...u,
-                // total_games: u.scores ? u.scores.length : 0, 
-                scores: undefined // ลบ scores ออกจาก response เพื่อไม่ให้รก
-            }));
-
-            const total = await prisma.user.count({ where: whereClause });
-
-            res.json({
-                users: usersWithStats,
-                total,
-                totalPages: Math.ceil(total / limit),
-                currentPage: page
-            });
-        } catch (err) {
-            console.error("Fetch Users Error:", err);
-            res.status(500).json({ error: "ดึงข้อมูลผู้ใช้งานไม่สำเร็จ" });
+        // 2. สร้างเงื่อนไขการค้นหา (Search)
+        let whereCondition = {};
+        
+        if (search) {
+            whereCondition.OR = [
+                { username: { contains: search, mode: 'insensitive' } },
+                { email: { contains: search, mode: 'insensitive' } }
+            ];
         }
-    });
+
+        // 3. สร้างเงื่อนไขการกรองตาม Tab (แยก Player กับ Staff)
+        if (tab === 'player') {
+            whereCondition.role = 'user'; // ดึงเฉพาะ user
+        } else if (tab === 'staff') {
+            whereCondition.role = { in: ['admin', 'editor'] }; // ดึงเฉพาะ admin กับ editor
+        }
+
+        // 4. ดึงข้อมูลจาก Database
+        const users = await prisma.user.findMany({
+            where: whereCondition,
+            skip: skip,
+            take: limit, // ✅ ให้ Database ตัดมาแค่ 8 คนเป๊ะๆ
+            orderBy: { uid: 'desc' } // เรียงคนสมัครใหม่ไว้บนสุด
+        });
+
+        // 5. นับจำนวนคนทั้งหมดตามเงื่อนไข เพื่อเอาไปทำปุ่มแบ่งหน้า (Pagination)
+        const total = await prisma.user.count({ where: whereCondition });
+
+        res.json({
+            users: users,
+            total: total,
+            totalPages: Math.ceil(total / limit)
+        });
+
+    } catch (error) {
+        console.error("Fetch Users Error:", error);
+        res.status(500).json({ error: "Failed to fetch users" });
+    }
+});
 
     // ✅ 9. API: ลบผู้ใช้งาน (User Management)
     router.delete('/user/:id', requireAuth, async (req, res) => {
@@ -448,5 +481,139 @@ export default function (prisma) {
         }
     });
 
+    // 1. ดึงข้อมูลทั้งหมด (GET)
+router.get('/chat-scenarios', async (req, res) => {
+    try {
+        const scenarios = await prisma.chatScenario.findMany({
+            orderBy: [
+                { category: 'asc' }, // เรียงตามหมวดหมู่
+                { level: 'asc' }     // เรียงตามเลเวล
+            ]
+        });
+
+        // จัด Format ข้อมูลให้ตรงกับที่ Frontend (ChatAdmin) ต้องการ
+        const formattedData = scenarios.map(item => ({
+            _id: item.cs_id.toString(), // ID ของ Database
+            id: item.scenario_id,       // ID ของเกม (เช่น callcenter-1)
+            category: item.category,
+            categoryTitle: item.categoryTitle,
+            level: item.level,
+            name: item.name,
+            avatar: item.avatar,
+            lossType: item.lossType,
+            msgs: item.content.msgs,       // แกะข้อความออกจาก JSON
+            choices: item.content.choices  // แกะตัวเลือกออกจาก JSON
+        }));
+
+        res.json(formattedData);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Failed to fetch scenarios" });
+    }
+});
+
+// 2. สร้างด่านใหม่ (POST)
+router.post('/chat-scenarios', async (req, res) => {
+    try {
+        const data = req.body;
+        const newScenario = await prisma.chatScenario.create({
+            data: {
+                scenario_id: data.id,
+                category: data.category,
+                categoryTitle: data.categoryTitle,
+                level: data.level,
+                name: data.name,
+                avatar: data.avatar,
+                lossType: data.lossType,
+                // แพ็ค msgs และ choices กลับเป็น JSON
+                content: {
+                    msgs: data.msgs,
+                    choices: data.choices
+                }
+            }
+        });
+        res.json({ success: true, newScenario });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Failed to create scenario" });
+    }
+});
+
+// 3. อัปเดตด่านเดิม (PUT)
+router.put('/chat-scenarios/:id', async (req, res) => {
+    try {
+        const { id } = req.params; // id คือ scenario_id (เช่น callcenter-1)
+        const data = req.body;
+
+        const updatedScenario = await prisma.chatScenario.update({
+            where: { scenario_id: id },
+            data: {
+                category: data.category,
+                categoryTitle: data.categoryTitle,
+                level: data.level,
+                name: data.name,
+                avatar: data.avatar,
+                lossType: data.lossType,
+                content: {
+                    msgs: data.msgs,
+                    choices: data.choices
+                }
+            }
+        });
+        res.json({ success: true, updatedScenario });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Failed to update scenario" });
+    }
+});
+
+// 4. ลบด่าน (DELETE)
+router.delete('/chat-scenarios/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await prisma.chatScenario.delete({
+            where: { scenario_id: id }
+        });
+        res.json({ success: true });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Failed to delete scenario" });
+    }
+});
+
     return router;
 };
+//  ✅ API สำหรับอัปเดตข้อมูลติดต่อ (Username, Email, Phone)
+router.put('/user/:id', async (req, res) => {
+    try {
+        const uid = parseInt(req.params.id);
+        const { username, email, phone } = req.body;
+
+        // เช็คว่ามีข้อมูลส่งมาครบไหม
+        if (!username || !email) {
+            return res.status(400).json({ error: "กรุณากรอก Username และ Email ให้ครบ" });
+        }
+
+        // ทำการอัปเดตข้อมูลใน Database (ใช้ Prisma)
+        const updatedUser = await prisma.user.update({
+            where: { uid: uid },
+            data: {
+                username: username,
+                email: email,
+                phone: phone || null // ถ้าไม่ได้ส่งเบอร์มาให้เป็น null
+            }
+        });
+
+        res.json({ success: true, message: "อัปเดตข้อมูลสำเร็จ", user: updatedUser });
+
+    } catch (error) {
+        console.error("Update user info error:", error);
+        
+        // ถ้าเกิด Error เพราะ Username หรือ Email ซ้ำกับคนอื่นในระบบ
+        if (error.code === 'P2002') {
+            return res.status(400).json({ error: "อีเมล หรือ ชื่อผู้ใช้งานนี้มีคนใช้แล้ว" });
+        }
+        
+        res.status(500).json({ error: "เกิดข้อผิดพลาดในการอัปเดตข้อมูล" });
+    }
+});
