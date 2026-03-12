@@ -9,27 +9,16 @@ import scoreRoute from './routes/score.js';
 import userRoute from './routes/user.js';
 import adminRoute from './routes/admin.js';
 import submitRoute from './routes/submit.js';
+import seedRoute from './routes/seed.js'; 
+
 const app = express();
 const prisma = new PrismaClient();
 const port = 4000;
 
-// app.use(cors({
-//   origin: [
-//     "http://localhost:3000",
-//     "http://127.0.0.1:3000",
-//     "https://sati-game-pj.vercel.app",
-//     "https://sati-game-pj-frontend.vercel.app"
-//   ],
-//   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-//   allowedHeaders: ["Content-Type", "Authorization"],
-//   credentials: true
-// }));
-// ✅ แก้ไข CORS ให้เป็น *
 app.use(cors({
   origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
-  // credentials: true // ⚠️ ต้องปิดการใช้งาน เพราะไม่สามารถใช้ร่วมกับ origin: "*" ได้
 }));
 
 app.use(helmet({
@@ -75,14 +64,17 @@ app.use((req, res, next) => {
   next();
 });
 
-
-
+// --- จัดการ Routes ---
 app.use('/', authRoute(prisma));
 app.use('/questions', questionRoute(prisma));
 app.use('/scores', scoreRoute(prisma));
 app.use('/user', userRoute(prisma));
 app.use('/admin', adminRoute(prisma));
 app.use('/submit-score', submitRoute(prisma));
+
+// ✅ 2. ใช้งาน Seed Route
+app.use('/seed', seedRoute(prisma)); 
+
 // Start Server
 if (process.env.NODE_ENV !== 'production') {
   app.listen(port, () => {

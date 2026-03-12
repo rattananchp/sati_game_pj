@@ -115,3 +115,19 @@ model AnswerLogs {
 
   @@map("answer_logs")
 }
+
+model ChatScenario {
+  cs_id         Int      @id @default(autoincrement())
+  scenario_id   String   @unique // รหัสอ้างอิง เช่น "callcenter-1"
+  category      String   // เช่น "callcenter", "scam"
+  categoryTitle String
+  level         Int
+  name          String
+  avatar        String
+  lossType      String?  @default("money")
+  
+  // ✅ นางเอกของเรา: เก็บ Array ของ msgs และ choices ทั้งหมดลงในนี้ก้อนเดียว
+  content       Json     
+
+  @@map("chat_scenario")
+}
