@@ -131,7 +131,6 @@ export default function HomePage() {
       <button
         onClick={toggleMute}
         className="fixed top-6 left-6 z-50 p-3 md:p-4 bg-white/10 backdrop-blur-xl rounded-full border border-white/20 shadow-2xl hover:scale-110 hover:bg-white/20 transition-all duration-300 active:scale-95 group"
-        title={isMuted ? "เปิดเสียง" : "ปิดเสียง"}
       >
         <span className="text-xl md:text-2xl group-hover:rotate-12 transition-transform block">{isMuted ? '🔇' : '🔊'}</span>
         {/* Tooltip */}
@@ -229,7 +228,6 @@ export default function HomePage() {
               router.push('/admin');
             }}
             className="group relative flex items-center justify-center w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-slate-700 to-slate-900 rounded-2xl shadow-xl border border-white/20 hover:scale-110 hover:border-purple-500/50 transition-all duration-300 active:scale-95"
-            title="จัดการระบบ"
           >
             <span className="text-2xl md:text-3xl grayscale group-hover:grayscale-0 transition-all">🛠️</span>
             {/* Tooltip */}
