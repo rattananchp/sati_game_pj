@@ -322,21 +322,21 @@ export default function ProfilePage() {
                                         <div className="text-green-400 mb-1 group-hover:scale-110 transition-transform drop-shadow-[0_0_8px_rgba(74,222,128,0.5)]">
                                             <Icons.Trophy />
                                         </div>
-                                        <div className="text-[10px] text-green-200/80 font-bold tracking-wider">ตอบคำถาม</div>
+                                        <div className="text-[10px] text-green-200/80 font-bold tracking-wider">ทดสอบความรู้</div>
                                         <div className="text-xl font-black text-white">{stats.normal} <span className="text-[9px] font-normal text-gray-400">ครั้ง</span></div>
                                     </div>
                                     <div className="flex flex-col items-center justify-center p-3 rounded-2xl bg-gradient-to-b from-red-500/10 to-transparent border border-red-500/20 relative group hover:bg-red-500/5 transition-all">
                                         <div className="text-red-400 mb-1 group-hover:scale-110 transition-transform drop-shadow-[0_0_8px_rgba(248,113,113,0.5)]">
                                             <Icons.Zap />
                                         </div>
-                                        <div className="text-[10px] text-red-200/80 font-bold tracking-wider">ทุบไวรัส</div>
+                                        <div className="text-[10px] text-red-200/80 font-bold tracking-wider">กำจัดไวรัส</div>
                                         <div className="text-xl font-black text-white">{stats.virus} <span className="text-[9px] font-normal text-gray-400">ครั้ง</span></div>
                                     </div>
                                     <div className="flex flex-col items-center justify-center p-3 rounded-2xl bg-gradient-to-b from-blue-500/10 to-transparent border border-blue-500/20 relative group hover:bg-blue-500/5 transition-all">
                                         <div className="text-blue-400 mb-1 group-hover:scale-110 transition-transform drop-shadow-[0_0_8px_rgba(96,165,250,0.5)]">
                                             <Icons.Message />
                                         </div>
-                                        <div className="text-[10px] text-blue-200/80 font-bold tracking-wider">แชทปั่น</div>
+                                        <div className="text-[10px] text-blue-200/80 font-bold tracking-wider">รับมือมิจฉาชีพ</div>
                                         <div className="text-xl font-black text-white">{stats.chat} <span className="text-[9px] font-normal text-gray-400">ครั้ง</span></div>
                                     </div>
                                 </div>

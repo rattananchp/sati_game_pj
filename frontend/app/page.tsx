@@ -134,6 +134,10 @@ export default function HomePage() {
         title={isMuted ? "เปิดเสียง" : "ปิดเสียง"}
       >
         <span className="text-xl md:text-2xl group-hover:rotate-12 transition-transform block">{isMuted ? '🔇' : '🔊'}</span>
+        {/* Tooltip */}
+        <div className="absolute top-full left-0 mt-3 px-3 py-1 bg-black/80 backdrop-blur text-white/80 text-xs font-bold rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 -translate-y-2 group-hover:translate-y-0 transition-all duration-300 pointer-events-none border border-white/10">
+          {isMuted ? 'เปิดเสียง' : 'ปิดเสียง'}
+        </div>
       </button>
 
       {/* ==================== 👤 User Menu Bar (Top Right) ==================== */}
@@ -211,7 +215,7 @@ export default function HomePage() {
 
           {/* Tooltip Label */}
           <div className="absolute bottom-full right-0 mb-3 px-3 py-1 bg-black/80 backdrop-blur text-yellow-400 text-xs font-bold rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300 pointer-events-none border border-yellow-500/30">
-            อันดับยอดฝีมือ
+            ตารางคะแนน
           </div>
         </button>
       </div>
@@ -225,12 +229,13 @@ export default function HomePage() {
               router.push('/admin');
             }}
             className="group relative flex items-center justify-center w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-slate-700 to-slate-900 rounded-2xl shadow-xl border border-white/20 hover:scale-110 hover:border-purple-500/50 transition-all duration-300 active:scale-95"
-            title="จัดการระบบ (Admin)"
+            title="จัดการระบบ"
           >
-            <span className="text-2xl md:text-3xl grayscale group-hover:grayscale-0 transition-all">⚙️</span>
-
-            {/* Badge */}
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+            <span className="text-2xl md:text-3xl grayscale group-hover:grayscale-0 transition-all">🛠️</span>
+            {/* Tooltip */}
+            <div className="absolute bottom-full left-0 mb-3 px-3 py-1 bg-black/80 backdrop-blur text-purple-200 text-xs font-bold rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300 pointer-events-none border border-purple-500/30">
+              จัดการระบบ
+            </div>
           </button>
         </div>
       )}
@@ -268,10 +273,10 @@ export default function HomePage() {
                 </div>
                 <div className="text-left flex-1">
                   <div className={`font-bold text-lg transition-colors ${!user ? 'text-gray-400' : 'text-white group-hover:text-green-300'}`}>
-                    ตอบคำถามวัดกึ๋น
+                    ทดสอบความรู้
                   </div>
                   <div className="text-[10px] text-gray-400 flex items-center gap-1 group-hover:text-gray-200">
-                    {!user ? <span className="text-amber-400 font-bold">ต้องเข้าสู่ระบบก่อน</span> : <span>คำถาม 4 ตัวเลือก</span>}
+                    {!user ? <span className="text-amber-400 font-bold">กรุณาเข้าสู่ระบบก่อนเริ่มเล่น</span> : <span>คำถาม 4 ตัวเลือก</span>}
                   </div>
                 </div>
                 <div className="text-green-400 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 font-bold text-xl">→</div>
@@ -287,10 +292,10 @@ export default function HomePage() {
                 </div>
                 <div className="text-left flex-1">
                   <div className={`font-bold text-lg transition-colors ${!user ? 'text-gray-400' : 'text-white group-hover:text-red-300'}`}>
-                    ทุบไวรัสวัดนิ้ว
+                    เกมกำจัดไวรัส
                   </div>
                   <div className="text-[10px] text-gray-400 flex items-center gap-1 group-hover:text-gray-200">
-                    {!user ? <span className="text-amber-400 font-bold">ต้องเข้าสู่ระบบก่อน</span> : <span>โหมดแอคชั่น: <span className="text-red-400 font-bold">มันส์มาก!</span></span>}
+                    {!user ? <span className="text-amber-400 font-bold">กรุณาเข้าสู่ระบบก่อนเริ่มเล่น</span> : <span>โหมดแอคชั่น: <span className="text-red-400 font-bold">สนุกตื่นเต้น!</span></span>}
                   </div>
                 </div>
                 <div className="text-red-400 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 font-bold text-xl">→</div>
@@ -306,10 +311,10 @@ export default function HomePage() {
                 </div>
                 <div className="text-left flex-1">
                   <div className={`font-bold text-lg transition-colors ${!user ? 'text-gray-400' : 'text-white group-hover:text-blue-300'}`}>
-                    แชทปั่นแก๊งคอล
+                    จำลองแชทรับมือมิจฉาชีพ
                   </div>
                   <div className="text-[10px] text-gray-400 flex items-center gap-1 group-hover:text-gray-200">
-                    {!user ? <span className="text-amber-400 font-bold">ต้องเข้าสู่ระบบก่อน</span> : <span>สถานะการหลอกลวง</span>}
+                    {!user ? <span className="text-amber-400 font-bold">กรุณาเข้าสู่ระบบก่อนเริ่มเล่น</span> : <span>ฝึกรับมือกลโกงออนไลน์</span>}
                   </div>
                 </div>
                 <div className="text-blue-400 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 font-bold text-xl">→</div>
@@ -334,7 +339,7 @@ export default function HomePage() {
           </button>
 
           <div className="text-center mb-8 mt-2">
-            <h2 className="text-2xl font-black text-white uppercase tracking-widest mb-1">เลือกความตึง</h2>
+            <h2 className="text-2xl font-black text-white uppercase tracking-widest mb-1">เลือกระดับความยาก</h2>
             <div className="w-16 h-1 bg-gradient-to-r from-transparent via-purple-500 to-transparent mx-auto rounded-full"></div>
           </div>
 
@@ -344,8 +349,8 @@ export default function HomePage() {
               <div className="flex items-center gap-4">
                 <span className="text-3xl filter grayscale group-hover:grayscale-0 transition-all duration-300 scale-90 group-hover:scale-110">👶</span>
                 <div className="text-left">
-                  <div className="font-bold text-white text-lg group-hover:text-green-300 transition-colors">อนุบาลหัดเดิน</div>
-                  <div className="text-[10px] text-gray-400 uppercase tracking-wide group-hover:text-gray-200">เวลา 20 วิ • ชิลๆ เหมือนเดินห้าง</div>
+                  <div className="font-bold text-white text-lg group-hover:text-green-300 transition-colors">ระดับเริ่มต้น</div>
+                  <div className="text-[10px] text-gray-400 uppercase tracking-wide group-hover:text-gray-200">เวลา 20 วิ • ตอบสบายๆ</div>
                 </div>
               </div>
             </button>
@@ -354,8 +359,8 @@ export default function HomePage() {
               <div className="flex items-center gap-4">
                 <span className="text-3xl filter grayscale group-hover:grayscale-0 transition-all duration-300 scale-90 group-hover:scale-110">🧑‍🦱</span>
                 <div className="text-left">
-                  <div className="font-bold text-white text-lg group-hover:text-yellow-300 transition-colors">มนุษย์เดินดิน</div>
-                  <div className="text-[10px] text-gray-400 uppercase tracking-wide group-hover:text-gray-200">เวลา 15 วิ • เริ่มตึงนิดๆ</div>
+                  <div className="font-bold text-white text-lg group-hover:text-yellow-300 transition-colors">ระดับปานกลาง</div>
+                  <div className="text-[10px] text-gray-400 uppercase tracking-wide group-hover:text-gray-200">เวลา 15 วิ • ท้าทายยิ่งขึ้น</div>
                 </div>
               </div>
             </button>
@@ -364,8 +369,8 @@ export default function HomePage() {
               <div className="flex items-center gap-4">
                 <span className="text-3xl filter grayscale group-hover:grayscale-0 transition-all duration-300 scale-90 group-hover:scale-110 animate-pulse">⚡</span>
                 <div className="text-left">
-                  <div className="font-bold text-white text-lg group-hover:text-red-300 transition-colors">เทพเจ้าสายฟ้า</div>
-                  <div className="text-[10px] text-gray-400 uppercase tracking-wide group-hover:text-gray-200">เวลา 10 วิ • กระพริบตาคือตุย</div>
+                  <div className="font-bold text-white text-lg group-hover:text-red-300 transition-colors">ระดับเชี่ยวชาญ</div>
+                  <div className="text-[10px] text-gray-400 uppercase tracking-wide group-hover:text-gray-200">เวลา 10 วิ • ต้องคิดอย่างรวดเร็ว</div>
                 </div>
               </div>
             </button>

@@ -177,7 +177,7 @@ export default function LoginPage() {
             disabled={isLoading}
             className="w-full py-4 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold text-lg uppercase tracking-widest hover:shadow-[0_0_20px_rgba(147,51,234,0.5)] transition-all active:scale-95 disabled:opacity-50"
           >
-            {isLoading ? 'กำลังโหลด...' : 'LOGIN เข้าเกม'}
+            {isLoading ? 'กำลังโหลด...' : 'เข้าสู่ระบบ'}
           </button>
         </form>
 

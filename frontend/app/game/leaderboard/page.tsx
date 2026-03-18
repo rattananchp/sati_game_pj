@@ -165,7 +165,7 @@ export default function LeaderboardPage() {
                     <div className="flex items-center justify-center gap-2 mb-4">
                         {/* ✨ เพิ่มแสงเรืองให้ถ้วยรางวัล */}
                         <span className="text-3xl drop-shadow-[0_0_15px_rgba(234,179,8,0.5)]">🏆</span>
-                        <h1 className="text-2xl font-black text-white uppercase tracking-widest drop-shadow-md">ทำเนียบยอดฝีมือ</h1>
+                        <h1 className="text-2xl font-black text-white uppercase tracking-widest drop-shadow-md">ตารางคะแนนสูงสุด</h1>
                     </div>
 
                     <div className="flex bg-black/20 p-1.5 rounded-2xl border border-white/10 relative shadow-inner">
@@ -177,7 +177,7 @@ export default function LeaderboardPage() {
                                 // ✨ ปรับปรุง Tab Active ให้ดูมีมิติขึ้น
                                 <div className="absolute inset-0 bg-gradient-to-b from-white/15 to-white/5 border border-white/20 rounded-xl -z-10 shadow-[0_2px_10px_rgba(0,0,0,0.2)] animate-fade-in"></div>
                             )}
-                            <span className="drop-shadow-sm">🧠 แบบทดสอบ (ยาก)</span>
+                            <span className="drop-shadow-sm">🧠 ทดสอบความรู้ (ยาก)</span>
                         </button>
 
                         <button
@@ -187,7 +187,7 @@ export default function LeaderboardPage() {
                             {activeTab === 'virus' && (
                                 <div className="absolute inset-0 bg-gradient-to-b from-white/15 to-white/5 border border-white/20 rounded-xl -z-10 shadow-[0_2px_10px_rgba(0,0,0,0.2)] animate-fade-in"></div>
                             )}
-                            <span className="drop-shadow-sm">🦠 ภารกิจปราบไวรัส</span>
+                            <span className="drop-shadow-sm">🦠 เกมกำจัดไวรัส</span>
                         </button>
                     </div>
                 </div>
@@ -197,12 +197,12 @@ export default function LeaderboardPage() {
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center h-40 gap-4 opacity-60 animate-pulse">
                             <div className="w-10 h-10 border-3 border-white/20 border-t-cyan-400 rounded-full animate-spin shadow-[0_0_15px_rgba(6,182,212,0.3)]"></div>
-                            <p className="text-xs text-cyan-300/70 font-mono uppercase tracking-widest">กำลังเชื่อมต่อข้อมูล...</p>
+                            <p className="text-xs text-cyan-300/70 font-mono uppercase tracking-widest">กำลังโหลดข้อมูล...</p>
                         </div>
                     ) : leaderboard.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-40 gap-3 opacity-50">
                             <div className="text-5xl grayscale drop-shadow-lg">🏜️</div>
-                            <p className="text-sm text-gray-400 font-medium">ยังไม่มีผู้เล่นในโหมดนี้</p>
+                            <p className="text-sm text-gray-400 font-medium">ยังไม่มีข้อมูลในหมวดนี้</p>
                         </div>
                     ) : (
                         <div className="space-y-1 pt-2">
@@ -234,7 +234,7 @@ export default function LeaderboardPage() {
                                         {leaderboard[myRankIndex].username}
                                         <span className="text-[8px] bg-cyan-950 text-cyan-300 border border-cyan-400/50 px-1.5 py-0.5 rounded-md uppercase tracking-wider shadow-[0_0_10px_rgba(6,182,212,0.15)]">คุณ</span>
                                     </span>
-                                    <span className="text-[10px] text-cyan-200/70 font-mono tracking-wider">สถิติของคุณ</span>
+                                    <span className="text-[10px] text-cyan-200/70 font-mono tracking-wider">คะแนนของคุณ</span>
                                 </div>
                             </div>
 
