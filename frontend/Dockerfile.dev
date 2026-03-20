@@ -1,0 +1,17 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# 1. ติดตั้ง dependencies (ใช้ npm install แทน ci เพื่อความยืดหยุ่นในเครื่อง dev)
+COPY package.json package-lock.json ./
+RUN npm install
+
+# 4. ปิด telemetry และตั้งค่า Port
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+EXPOSE 3000
+
+# 5. รันโหมด development
+CMD ["npm", "run", "dev"]

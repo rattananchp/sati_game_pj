@@ -1,0 +1,25 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# 1. Copy เฉพาะไฟล์ package
+COPY package.json package-lock.json ./
+
+# 2. ใช้ --ignore-scripts เพื่อไม่ให้มันรัน prisma generate ตอน install
+RUN npm install --ignore-scripts
+
+# 3. Copy ไฟล์ทั้งหมด (รวมโฟลเดอร์ prisma) เข้ามา
+COPY . .
+
+# 4. ค่อยสั่ง generate เองหลังจากไฟล์มาครบแล้ว
+RUN npx prisma generate
+
+# ตั้งค่า Port และ Telemetry
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+EXPOSE 3000
+
+# รันโหมด dev
+CMD ["npm", "run", "dev"]

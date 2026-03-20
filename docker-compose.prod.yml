@@ -1,0 +1,68 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sati_backend
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    restart: always
+    ports:
+      - "4000:4000"
+    env_file:
+      - ./backend/.env
+    environment:
+      - PORT=4000
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: sati_frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./frontend/.env.local
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:4000
+    depends_on:
+      - backend
+
+  db:
+    image: postgres:18.3-alpine3.23
+    container_name: sati_db
+    restart: always
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydatabase
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  studio:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: npx prisma studio --url postgresql://myuser:mypassword@db:5432/mydatabase --browser none --port 5555
+    env_file:
+      - ./backend/.env
+    ports:
+      - "5555:5555"
+    environment:
+      - DATABASE_URL=postgresql://myuser:mypassword@db:5432/mydatabase
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - db
+
+volumes:
+    postgres_data:
